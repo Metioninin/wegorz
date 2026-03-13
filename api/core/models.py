@@ -4,6 +4,7 @@ from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
 class User(BaseModel):
     login: str
+    session: str
 
 
 class Login(BaseModel):

@@ -39,7 +39,9 @@ async def is_password_valid(conn: AsyncConnection, login: str, password: str) ->
 
 async def create_session(conn: AsyncConnection, login: str) -> Optional[str]:
     async with conn.cursor() as cur:
-        # insert new session
+        # lock user to ensure session won't be created after changing it
+        await cur.execute("SELECT 1 FROM users WHERE login = %s FOR SHARE", (login,))
+
         await cur.execute(
             """
             INSERT INTO sessions (id, login)

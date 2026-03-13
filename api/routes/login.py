@@ -94,6 +94,22 @@ async def post_change_password(
         """,
         (data.new_password, user_info.login),
     )
+
+    # clear previous sessions and create new
+    await conn.execute(
+        """
+        DELETE FROM sessions
+        WHERE login = %s
+        """,
+        (user_info.login,)
+    )
+    session = await create_session(conn, user_info.login)
+
+    if session is None:
+        await conn.rollback()
+        return gen_change_pass_template(request, error="Bład serwera. Spróbuj ponownie.")
     await conn.commit()
 
-    return gen_change_pass_template(request, success="Hasło zostało zmienione.")
+    response = gen_change_pass_template(request, success="Hasło zostało zmienione.")
+    response.set_cookie("session", session, secure=True, httponly=True)
+    return response
