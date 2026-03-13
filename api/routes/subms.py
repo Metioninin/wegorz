@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
-from api.core.db import get_conn, get_subm, send_submit
+from api.core.db import can_submit, get_conn, get_subm, send_submit
 from api.core.models import Submit, User
 from api.core.jinja import templates
 from api.core.utils import gen_logout_redirect
@@ -44,12 +44,20 @@ async def get_submit(
 
 @router.post("/submit")
 async def post_submit(
+    request: Request,
     data: Submit = Form(),
     user_info: User | None = Depends(get_user_info),
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
         return gen_logout_redirect()
+
+    if not await can_submit(conn, user_info.login):
+        return templates.TemplateResponse(
+            request=request,
+            name="send.html",
+            context={"error": "Czas na wysyłanie zgłoszeń się nie zaczął lub minął."},
+        )
 
     subm_id = await send_submit(conn, data.code, data.lang, user_info.login)
     await conn.commit()

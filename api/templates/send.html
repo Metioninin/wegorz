@@ -27,6 +27,9 @@
 
     <p>
       <button type="submit">Submit</button>
+        {% if error %}
+            <p style="color:red">{{ error }}</p>
+        {% endif %}
     </p>
   </form>
 
