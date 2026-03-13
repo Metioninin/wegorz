@@ -80,7 +80,7 @@ async def get_change_password(
     request: Request, user_info: User | None = Depends(get_user_info)
 ) -> Response:
     if user_info is None:
-        return gen_login_template(request)
+        return RedirectResponse(url="/login", status_code=303)
     return gen_change_pass_template(request)
 
 
@@ -92,7 +92,7 @@ async def post_change_password(
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
-        return gen_login_template(request)
+        return RedirectResponse(url="/login", status_code=303)
 
     if not await is_password_valid(conn, user_info.login, data.current_password):
         return gen_change_pass_template(
