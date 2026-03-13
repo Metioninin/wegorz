@@ -37,11 +37,15 @@ async def homepage(
     user_info: User | None = Depends(get_user_info),
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
-    subms = None
-
     if user_info is not None:
         subms = await get_subms(conn, user_info.login)
+    else:
+        subms = None
 
-    return gen_homepage_template(
+    resp = gen_homepage_template(
         request, logged_in=user_info is not None, submissions=subms
     )
+    if user_info is None:
+        resp.delete_cookie("session")
+    
+    return resp

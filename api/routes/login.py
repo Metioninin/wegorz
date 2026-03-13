@@ -7,6 +7,7 @@ from api.core.auth import get_user_info
 from api.core.db import create_session, delete_session, get_conn, is_password_valid
 from api.core.jinja import templates
 from api.core.models import ChangePassword, Login, User
+from api.core.utils import gen_logout_redirect
 from api.routes.home import gen_homepage_template
 
 router = APIRouter()
@@ -67,13 +68,9 @@ async def post_logout(
     user_info: User | None = Depends(get_user_info),
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
-    response = RedirectResponse(url="/", status_code=303)
-
     if user_info is not None:
         await delete_session(conn, user_info.session)
-        response.delete_cookie("session")
-
-    return response
+    return gen_logout_redirect()
 
 
 @router.get("/change-password")
@@ -81,7 +78,7 @@ async def get_change_password(
     request: Request, user_info: User | None = Depends(get_user_info)
 ) -> Response:
     if user_info is None:
-        return RedirectResponse(url="/", status_code=303)
+        return gen_logout_redirect()
     return gen_change_pass_template(request)
 
 
@@ -93,7 +90,7 @@ async def post_change_password(
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
-        return RedirectResponse(url="/", status_code=303)
+        return gen_logout_redirect()
 
     if not await is_password_valid(conn, user_info.login, data.current_password):
         return gen_change_pass_template(
