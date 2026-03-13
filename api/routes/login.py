@@ -4,7 +4,7 @@ from fastapi.routing import APIRouter
 from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
-from api.core.db import create_session, get_conn, is_password_valid
+from api.core.db import create_session, delete_session, get_conn, is_password_valid
 from api.core.jinja import templates
 from api.core.models import ChangePassword, Login, User
 from api.routes.home import gen_homepage_template
@@ -62,6 +62,20 @@ async def post_login(
     return response
 
 
+@router.post("/logout")
+async def post_logout(
+    user_info: User | None = Depends(get_user_info),
+    conn: AsyncConnection = Depends(get_conn),
+) -> Response:
+    response = RedirectResponse(url="/", status_code=303)
+
+    if user_info is not None:
+        await delete_session(conn, user_info.session)
+        response.delete_cookie("session")
+
+    return response
+
+
 @router.get("/change-password")
 async def get_change_password(
     request: Request, user_info: User | None = Depends(get_user_info)
@@ -101,13 +115,15 @@ async def post_change_password(
         DELETE FROM sessions
         WHERE login = %s
         """,
-        (user_info.login,)
+        (user_info.login,),
     )
     session = await create_session(conn, user_info.login)
 
     if session is None:
         await conn.rollback()
-        return gen_change_pass_template(request, error="Bład serwera. Spróbuj ponownie.")
+        return gen_change_pass_template(
+            request, error="Bład serwera. Spróbuj ponownie."
+        )
     await conn.commit()
 
     response = gen_change_pass_template(request, success="Hasło zostało zmienione.")

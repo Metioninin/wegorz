@@ -58,6 +58,16 @@ async def create_session(conn: AsyncConnection, login: str) -> Optional[str]:
         return res[0]
 
 
+async def delete_session(conn: AsyncConnection, session: str) -> None:
+    await conn.execute(
+        """
+        DELETE FROM sessions
+        WHERE id = %s
+        """,
+        (session,)
+    )
+
+
 async def get_subms(conn: AsyncConnection, user: str) -> list[Submission]:
     columns = [sql.Identifier(column) for column in Submission.model_fields]
 

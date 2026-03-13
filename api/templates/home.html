@@ -8,6 +8,11 @@
 
     {% if logged_in %}
         <p><a href="/change-password">Zmień hasło</a></p>
+        <p>
+            <form action="/logout" method="POST" style="display:inline;">
+                <button type="submit" class="link-btn">Wyloguj</button>
+            </form>
+        </p>
         <p><a href="/submit">Zgłoś rozwiązanie</a></p>
         <h2>Zgłoszenia</h2>
 
