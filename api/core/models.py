@@ -1,11 +1,5 @@
 from typing import Self
-from pydantic import BaseModel, Field, ValidationError, model_validator
-
-
-def get_first_error(exc: ValidationError):
-    msg = exc.errors()[0]["msg"]
-    msg = msg.removeprefix("Value error, ")
-    return msg
+from pydantic import BaseModel, Field, model_validator
 
 
 class User(BaseModel):
