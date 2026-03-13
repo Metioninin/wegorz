@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Zmiana hasła</title>
+<script>
+function validatePassword(event) {
+    event.preventDefault();
+
+    const currPass = document.querySelector('input[name="current_password"]').value;
+    const newPass = document.querySelector('input[name="new_password"]').value;
+    const confirmPass = document.querySelector('input[name="confirm_password"]').value;
+    const errorMsg = document.getElementById('error-msg');
+    errorMsg.textContent = '';
+
+    // Length check
+    const pairs = [['Aktualne hasło', currPass], ['Nowe hasło', newPass]];
+    for (const [passname, value] of pairs) {
+        if (value.length < 8 || value.length > 72) {
+            errorMsg.textContent = `${passname} musi mieć od 8 do 72 znaków.`;
+            return false;
+        }
+    }
+
+    if (currPass === newPass) {
+        errorMsg.textContent = 'Nowe hasło musi różnić się od aktualnego.';
+        return false;
+    }
+
+    if (newPass !== confirmPass) {
+        errorMsg.textContent = 'Nowe hasło i potwierdzenie hasła muszą być takie same.';
+        return false;
+    }
+
+    event.target.submit();
+}
+</script>
+</head>
+<body>
+<h2>Zmiana hasła</h2>
+
+<p id="error-msg" style="color:red"></p>
+
+{% if error %}
+<p style="color:red">{{ error }}</p>
+{% endif %}
+{% if success %}
+<p style="color:green">{{ success }}</p>
+{% endif %}
+
+<form action="/change-password" method="post" onsubmit="validatePassword(event)">
+<label>Aktualne hasło</label><br>
+<input type="password" name="current_password" required><br><br>
+
+<label>Nowe hasło</label><br>
+<input type="password" name="new_password" required><br><br>
+
+<label>Potwierdź nowe hasło</label><br>
+<input type="password" name="confirm_password" required><br><br>
+
+<button type="submit">Zmień hasło</button>
+</form>
+</body>
+</html>
