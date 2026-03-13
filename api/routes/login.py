@@ -7,19 +7,9 @@ from api.core.auth import get_user_info
 from api.core.db import create_session, get_conn, is_password_valid
 from api.core.jinja import templates
 from api.core.models import ChangePassword, Login, User
+from api.routes.home import gen_homepage_template
 
 router = APIRouter()
-
-
-def gen_login_template(
-    request: Request, status_code: int = 200, error: str | None = None
-) -> Response:
-    return templates.TemplateResponse(
-        request=request,
-        name="login.html",
-        context={"error": error} if error else {},
-        status_code=status_code,
-    )
 
 
 def gen_change_pass_template(
@@ -43,30 +33,27 @@ def gen_change_pass_template(
     )
 
 
-@router.get("/login")
-async def get_login(
-    request: Request, user_info: User | None = Depends(get_user_info)
-) -> Response:
-    if user_info is not None:
-        return RedirectResponse(url="/", status_code=303)
-    return gen_login_template(request)
-
-
 @router.post("/login")
 async def post_login(
     request: Request, data: Login = Form(), conn: AsyncConnection = Depends(get_conn)
 ) -> Response:
     if not await is_password_valid(conn, data.login, data.password):
-        return gen_login_template(
-            request, status_code=401, error="Niepoprawny login lub hasło."
+        return gen_homepage_template(
+            request,
+            logged_in=False,
+            status_code=401,
+            login_error="Niepoprawny login lub hasło.",
         )
 
     session = await create_session(conn, data.login)
     await conn.commit()
 
     if session is None:
-        return gen_login_template(
-            request, status_code=500, error="Bład serwera. Spróbuj ponownie."
+        return gen_homepage_template(
+            request,
+            logged_in=False,
+            status_code=500,
+            login_error="Bład serwera. Spróbuj ponownie.",
         )
 
     response = RedirectResponse(url="/", status_code=303)
@@ -80,7 +67,7 @@ async def get_change_password(
     request: Request, user_info: User | None = Depends(get_user_info)
 ) -> Response:
     if user_info is None:
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
     return gen_change_pass_template(request)
 
 
@@ -92,7 +79,7 @@ async def post_change_password(
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
-        return RedirectResponse(url="/login", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
 
     if not await is_password_valid(conn, user_info.login, data.current_password):
         return gen_change_pass_template(
