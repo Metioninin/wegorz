@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submission #{{ submission.id }}</title>
+</head>
+<body>
+
+    <h1>Submission #{{ submission.id }}</h1>
+
+    <table border="1">
+        <caption>Submission Info</caption>
+        <tr>
+            <th>Language</th>
+            <td>{{ submission.lang }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>{{ submission.status }}</td>
+        </tr>
+        <tr>
+            <th>Sent At</th>
+            <td>{{ submission.send_at }}</td>
+        </tr>
+    </table>
+
+    <h2>Details</h2>
+
+    <table border="1">
+        <caption>Submission Detail</caption>
+        <tr>
+            <th>Status Message</th>
+            <td>{{ submission.status_msg }}</td>
+        </tr>
+    </table>
+
+    <h2>Code</h2>
+
+    <pre><code>{{ submission.code }}</code></pre>
+
+</body>
+</html>

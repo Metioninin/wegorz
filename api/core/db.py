@@ -2,7 +2,10 @@ import logging
 import os
 from typing import AsyncGenerator, Optional
 
-from psycopg import AsyncConnection
+from psycopg import AsyncConnection, sql
+from psycopg.rows import dict_row
+
+from api.core.models import Submission, SubmissionDetail
 
 ENVS = {
     "host": os.getenv("POSTGRES_HOST"),
@@ -51,3 +54,55 @@ async def create_session(conn: AsyncConnection, login: str) -> Optional[str]:
             logging.info("Session insert failed, wow!")
             return None
         return res[0]
+
+
+async def get_subms(conn: AsyncConnection, user: str) -> list[Submission]:
+    columns = [sql.Identifier(column) for column in Submission.model_fields]
+
+    async with conn.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            sql.SQL(
+                """
+                SELECT {}
+                FROM submissions
+                WHERE user_id = %s
+                """,
+            ).format(sql.SQL(", ").join(columns)),
+            (user,),
+        )
+        res = await cur.fetchall()
+    return [Submission(**row) for row in res]
+
+
+async def get_subm(conn: AsyncConnection, subm_id: int, user: str) -> SubmissionDetail | None:
+    columns = [sql.Identifier(column) for column in SubmissionDetail.model_fields]
+
+    async with conn.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            sql.SQL(
+                """
+                SELECT {}
+                FROM submissions
+                WHERE id = %s AND user_id = %s
+                """
+            ).format(sql.SQL(", ").join(columns)),
+            (subm_id, user),
+        )
+        res = await cur.fetchone()
+
+    return SubmissionDetail(**res) if res else None
+
+
+async def send_submit(conn: AsyncConnection, code: str, lang: str, user_id: str) -> int:
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """
+            INSERT INTO submissions (code, lang, user_id)
+            VALUES (%s, %s, %s)
+            RETURNING id
+            """,
+            (code, lang, user_id),
+        )
+        res = await cur.fetchone()
+        assert res is not None
+    return res[0]

@@ -8,6 +8,26 @@
 
     {% if logged_in %}
         <p><a href="/change-password">Zmień hasło</a></p>
+        <p><a href="/submit">Zgłoś rozwiązanie</a></p>
+        <h2>Zgłoszenia</h2>
+
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Czas</th>
+                <th>Język</th>
+                <th>Status</th>
+            </tr>
+
+            {% for s in submissions %}
+            <tr>
+                <td>{{ s.id }}</td>
+                <td>{{ s.send_at }}</td>
+                <td>{{ s.lang }}</td>
+                <td>{{ s.status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
     {% else %}
         <h2>Logowanie</h2>
         <form method="post" action="/login">
