@@ -74,6 +74,6 @@ async def post_login(
         session = res[0]
 
     response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie("session", session)
+    response.set_cookie("session", session, secure=True, httponly=True)
 
     return response
