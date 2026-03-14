@@ -40,15 +40,12 @@ CREATE INDEX idx_submissions_user ON submissions(user_id);
 CREATE TABLE IF NOT EXISTS contest(
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
-    final_at TIMESTAMPTZ NOT NULL
-
-    CONSTRAINT starts_before_ends CHECK(starts_at < ends_at),
-    CONSTRAINT ends_at_before_final_at CHECK(ends_at < final_at)
+    CONSTRAINT starts_before_ends CHECK(starts_at < ends_at)
 );
 
 
-INSERT INTO contest (starts_at, ends_at, final_at)
-VALUES (now() + INTERVAL '60 days', now() + INTERVAL '61 days', now() + INTERVAL '62 days');
+INSERT INTO contest (starts_at, ends_at)
+VALUES (now() - INTERVAL '60 days', now() + INTERVAL '61 days');
 
 REVOKE INSERT, DELETE ON contest FROM PUBLIC;
 

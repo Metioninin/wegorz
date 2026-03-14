@@ -124,9 +124,7 @@ async def can_submit(conn: AsyncConnection, user_id: str) -> bool:
     async with conn.cursor() as cur:
         await cur.execute(
             """
-            SELECT 
-                (now() BETWEEN starts_at AND ends_at) 
-                OR (u.finalist AND now() BETWEEN ends_at AND final_at)
+            SELECT now() BETWEEN starts_at AND ends_at
             FROM contest c
             JOIN users u ON u.login = %s
             LIMIT 1

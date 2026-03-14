@@ -6,7 +6,6 @@ from api.core.db import get_conn
 from api.core.models import User
 
 
-# TODO: add delete cookie somewhere
 async def get_user_info(
     conn: AsyncConnection = Depends(get_conn),
     session: str | None = Cookie(default=None),
