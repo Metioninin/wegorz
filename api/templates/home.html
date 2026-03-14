@@ -26,7 +26,7 @@
 
             {% for s in submissions %}
             <tr>
-                <td>{{ s.id }}</td>
+                <td><a href="/submission/{{ s.id }}">{{ s.id }}</a></td>
                 <td>{{ s.send_at }}</td>
                 <td>{{ s.lang }}</td>
                 <td>{{ s.status }}</td>
