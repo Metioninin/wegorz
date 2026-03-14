@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Strona główna</title>
+</head>
+<body>
+    <h1>Strona główna</h1>
+
+    {% if logged_in %}
+        <p><a href="/change-password">Zmień hasło</a></p>
+        <p>
+            <form action="/logout" method="POST" style="display:inline;">
+                <button type="submit" class="link-btn">Wyloguj</button>
+            </form>
+        </p>
+        <p><a href="/submit">Zgłoś rozwiązanie</a></p>
+        <h2>Zgłoszenia</h2>
+
+        <table border="1">
+            <tr>
+                <th>ID</th>
+                <th>Czas</th>
+                <th>Język</th>
+                <th>Status</th>
+            </tr>
+
+            {% for s in submissions %}
+            <tr>
+                <td><a href="/submission/{{ s.id }}">{{ s.id }}</a></td>
+                <td>{{ s.send_at }}</td>
+                <td>{{ s.lang }}</td>
+                <td>{{ s.status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <h2>Logowanie</h2>
+        <form method="post" action="/login">
+            <input type="text" name="login" placeholder="Login" required><br>
+            <input type="password" name="password" placeholder="Hasło" required><br>
+            <button type="submit">Zaloguj</button>
+        </form>
+        {% if login_error %}
+            <p style="color:red">{{ login_error }}</p>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
