@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using TMPro;
 using UnityEngine;
+using UnityEngine.XR;
 
 [Serializable] public class pair
 {
@@ -41,10 +42,11 @@ using UnityEngine;
 [Serializable] public class Notation
 {
     public int k; // k = n / sta, k = m / stb
-    public List<string> playerNames;
+    public List<string> playerNames; //w kolejnosci rankingu
     public List<Moves> framesTop;
     public List<Moves> framesBottom;
     public string winner;
+    public List<int> zone;
     public Notation(){}
 
     public static Notation Read(FileInfo file)
@@ -66,6 +68,7 @@ public class Interpreter : MonoBehaviour
     [SerializeField] GameObject winnerArea;
     [SerializeField] TextMeshProUGUI winnerText;
     [SerializeField] Ranking ranking;
+    [SerializeField] Transform[] zoneMasks; //LRUD
 
     private void Start()
     {
@@ -107,13 +110,29 @@ public class Interpreter : MonoBehaviour
         return new Vector2(p.x - m / 2, p.y - n / 2);
     }
 
+    void SetZone(float size)
+    {
+        for (int i = 0; i < 2; i++)
+            zoneMasks[i].localScale = new Vector2(size, 1);
+        for (int i = 2; i < 4; i++)
+            zoneMasks[i].localScale = new Vector2(1, size);
+    }
+
     IEnumerator StartGame(Notation data)
     {
+        ranking.gameObject.SetActive(false);
         isGameStarted = true;
         players = new List<GameObject>();
         playerCount = data.playerNames.Count;
         kratka = k_Unity / data.k;
 
+        zoneMasks[0].GetChild(0).localPosition = new Vector2(kratka / 2, 0); //l
+        zoneMasks[1].GetChild(0).localPosition = new Vector2(-kratka / 2, 0); //r
+        zoneMasks[2].GetChild(0).localPosition = new Vector2(0, -kratka / 2); //u
+        zoneMasks[3].GetChild(0).localPosition = new Vector2(0, kratka / 2); //d
+
+        zoneMasks[0].GetChild(0).localScale = zoneMasks[1].localScale = new Vector2(0, 1); //lr
+        zoneMasks[2].GetChild(0).localScale = zoneMasks[3].localScale = new Vector2(1, 0); //du
 
         for (int i = 0; i < playerCount; i++)
         {
@@ -121,6 +140,7 @@ public class Interpreter : MonoBehaviour
             newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255)));
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
+            SetZone(data.zone[i] * kratka);
         }
 
         for (int i = 1; i < data.framesTop.Count; i++)
@@ -137,6 +157,7 @@ public class Interpreter : MonoBehaviour
                     players[j].transform.localScale = new Vector2(kratka * wielBoku, kratka * wielBoku);
                 }
             }
+            SetZone(data.zone[i] * kratka);
         }
 
         winnerArea.SetActive(true);
@@ -145,6 +166,7 @@ public class Interpreter : MonoBehaviour
         winnerArea.SetActive(false);
 
         ranking.gameObject.SetActive(true);
-        ranking.SetRanking();
+        ranking.SetRanking(data.playerNames);
+        isGameStarted = false;
     }
 }
