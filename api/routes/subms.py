@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Path, Request, Response
+from fastapi import APIRouter, Depends, Form, HTTPException, Path, Request, Response
 from fastapi.responses import RedirectResponse
 from psycopg import AsyncConnection
 
@@ -19,14 +19,12 @@ async def get_submission_details(
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
-        return gen_logout_redirect()
+        raise HTTPException(404)
 
     subm = await get_subm(conn, subm_id, user_info.login)
 
     if subm is None:
-        return templates.TemplateResponse(
-            request=request, name="404.html", status_code=404
-        )
+        raise HTTPException(404)
 
     return templates.TemplateResponse(
         request=request, name="subm.html", context={"submission": subm}
