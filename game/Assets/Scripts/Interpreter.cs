@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
+using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.XR;
 
@@ -69,9 +70,11 @@ public class Interpreter : MonoBehaviour
     [SerializeField] TextMeshProUGUI winnerText;
     [SerializeField] Ranking ranking;
     [SerializeField] Transform[] zoneMasks; //LRUD
+    [SerializeField] TextMeshProUGUI speedLabel;
 
     private void Start()
     {
+        speedLabel.text = speed.ToString();
         StartCoroutine(SlowerUpdate());
     }
 
@@ -117,7 +120,7 @@ public class Interpreter : MonoBehaviour
         for (int i = 2; i < 4; i++)
             zoneMasks[i].localScale = new Vector2(1, size);
     }
-
+    
     IEnumerator StartGame(Notation data)
     {
         ranking.gameObject.SetActive(false);
@@ -168,5 +171,17 @@ public class Interpreter : MonoBehaviour
         ranking.gameObject.SetActive(true);
         ranking.SetRanking(data.playerNames);
         isGameStarted = false;
+    }
+
+    public void MoreSpeed()
+    {
+        speed += .5f;
+        speedLabel.text = speed.ToString();
+    }
+
+    public void LessSpeed()
+    {
+        speed -= .5f;
+        speedLabel.text = speed.ToString();
     }
 }
