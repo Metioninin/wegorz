@@ -3,10 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
-using Unity.VisualScripting;
-using UnityEditor.U2D;
 using UnityEngine;
-using UnityEngine.XR;
 
 public class Anim
 {
@@ -56,6 +53,10 @@ public class Anim
     {
         moves = new List<pair>();
     }
+    public Moves(List<pair> moves)
+    {
+        this.moves = moves;
+    }   
 }
 
 //przy zmianie stosunku bokow nalezy zmienic rozdzielczosc gry i dostosowac zmienna k_unity i zmienic n i m
@@ -65,7 +66,6 @@ public class Anim
     public List<string> playerNames; //w kolejnosci rankingu
     public List<Moves> framesTop;
     public List<Moves> framesBottom;
-    public string winner;
     public List<int> zone;
     public Notation(){}
 
@@ -81,8 +81,9 @@ public class Interpreter : MonoBehaviour
     List<GameObject> players;
     int playerCount, currentFrame = 1;
     public float refreshRate = 1;
-    public float speed = 1;
-    bool isGameStarted = false, isGameEnded = false;
+    float speed = 1;
+    public float speed2 = 1;
+    bool isGameStarted = false;
     public int k_Unity; //dlugosc boku mapy(krotsza) / st_a
     public float n = 10, m = 15;
     [SerializeField] GameObject winnerArea;
@@ -95,7 +96,32 @@ public class Interpreter : MonoBehaviour
 
     private void Start()
     {
-        speedLabel.text = speed.ToString();
+        /*Notation test = new Notation();
+        int _k = 3;
+        List<string> _playerNames = new List<string> { "A", "B", "C" };
+        List<Moves> _framesTop = new List<Moves> {new Moves(new List<pair> {new pair(0, 6), new pair(4, 6), new pair(6, 1)}),
+        new Moves(new List<pair> {new pair(1, 6), new pair(3, 6), new pair(6, 2)}), 
+        new Moves(new List<pair> {new pair(2, 6), new pair(-1, -1), new pair(6, 3)}),
+        new Moves(new List<pair> {new pair(2, 5), new pair(-1, -1), new pair(5, 3)})};
+        
+        List<Moves> _framesBottom = new List<Moves> {new Moves(new List<pair> {new pair(1, 5), new pair(5, 5), new pair(7, 0)}),
+        new Moves(new List<pair> {new pair(2, 5), new pair(4, 5), new pair(7, 1)}),
+        new Moves(new List<pair> {new pair(4, 4), new pair(-1, -1), new pair(7, 2)}),
+        new Moves(new List<pair> {new pair(4, 3), new pair(-1, -1), new pair(6, 2)})};
+        List<int> _zone = new List<int> { 0, 0, 0, 1, 1, 1, 1 };
+
+        test.playerNames = _playerNames;
+        test.zone = _zone;
+        test.k = _k;
+        test.framesBottom = _framesBottom;
+        test.framesTop = _framesTop;
+
+        string json = JsonUtility.ToJson(test, true);
+        File.WriteAllText(Application.persistentDataPath + "/pliczek.json", json);
+        Debug.Log(Application.persistentDataPath);*/
+
+        speed = speed2 / 1000f;
+        speedLabel.text = speed2.ToString();
         StartCoroutine(SlowerUpdate());
     }
 
@@ -139,16 +165,16 @@ public class Interpreter : MonoBehaviour
         if (init)
         {
             for (int i = 0; i < 2; i++)
-                zoneMasks[i].localScale = new Vector2(size, 1);
+                zoneMasks[i].localScale = new Vector2(size, n);
             for (int i = 2; i < 4; i++)
-                zoneMasks[i].localScale = new Vector2(1, size);
+                zoneMasks[i].localScale = new Vector2(m, size);
         }
         else
         {
             for (int i = 0; i < 2; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, 1, 1), 0, speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, n, 1), 0, speed, true));
             for (int i = 2; i < 4; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(1, size, 1), 0, speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, speed, true));
         }
     }
 
@@ -186,12 +212,15 @@ public class Interpreter : MonoBehaviour
         for (int j = 0; j < playerCount; j++)
         {
             if (!players[j].activeInHierarchy) continue;
-            if (data.framesTop[currentFrame].moves[j] == new pair(-1, -1)) players[j].SetActive(false);
+            if (data.framesTop[currentFrame].moves[j].x == -1)
+            {
+                players[j].SetActive(false);
+            }
             else
             {
                 animations.Add(new Anim(players[j].transform, players[j].transform.position, WorldPos((data.framesTop[currentFrame].moves[j] + data.framesBottom[currentFrame].moves[j]) / 2), 0, speed, false));
                 float wielBoku = data.framesBottom[currentFrame].moves[j].x - data.framesTop[currentFrame].moves[j].x;
-                animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector2(kratka * wielBoku, kratka * wielBoku), 0, 2f * speed, true));
+                animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2f * speed, true));
             }
         }
         SetZone(data.zone[currentFrame] * kratka, false);
@@ -201,25 +230,29 @@ public class Interpreter : MonoBehaviour
 
     void StartGame(Notation _data)
     {
+        Debug.Log("heyy");
         data = _data;
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
         players = new List<GameObject>();
         playerCount = data.playerNames.Count;
-        kratka = k_Unity / data.k;
+        kratka = (float)k_Unity / data.k;
 
         zoneMasks[0].GetChild(0).localPosition = new Vector2(kratka / 2, 0); //l
         zoneMasks[1].GetChild(0).localPosition = new Vector2(-kratka / 2, 0); //r
+        zoneMasks[0].GetChild(0).localScale = zoneMasks[1].GetChild(0).localScale = new Vector2(kratka, 1); //lr
+
         zoneMasks[2].GetChild(0).localPosition = new Vector2(0, -kratka / 2); //u
         zoneMasks[3].GetChild(0).localPosition = new Vector2(0, kratka / 2); //d
+        zoneMasks[2].GetChild(0).localScale = zoneMasks[3].GetChild(0).localScale = new Vector2(1, kratka); //du
 
-        zoneMasks[0].GetChild(0).localScale = zoneMasks[1].localScale = new Vector2(0, 1); //lr
-        zoneMasks[2].GetChild(0).localScale = zoneMasks[3].localScale = new Vector2(1, 0); //du
 
+        zoneMasks[0].localScale = zoneMasks[1].localScale = new Vector2(0, n); //lr
+        zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
         for (int i = 0; i < playerCount; i++)
         {
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
-            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255)));
+            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255f, 1));
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
             SetZone(data.zone[i] * kratka, true);
@@ -229,9 +262,11 @@ public class Interpreter : MonoBehaviour
 
     IEnumerator EndGame()
     {
+        foreach (var player in players) { Destroy(player); }
+        players.Clear();
         winnerArea.SetActive(true);
-        winnerText.text = data.winner;
-        yield return new WaitForSeconds(15f / speed);
+        winnerText.text = data.playerNames[0];
+        yield return new WaitForSeconds(5 / speed2);
         winnerArea.SetActive(false);
 
         ranking.gameObject.SetActive(true);
@@ -241,13 +276,15 @@ public class Interpreter : MonoBehaviour
 
     public void MoreSpeed()
     {
-        speed += .5f;
-        speedLabel.text = speed.ToString();
+        speed2 += .5f;
+        speedLabel.text = speed2.ToString();
+        speed = speed2 / 1000f;
     }
 
     public void LessSpeed()
     {
-        speed -= .5f;
-        speedLabel.text = speed.ToString();
+        speed2 -= .5f;
+        speedLabel.text = speed2.ToString();
+        speed = speed2 / 1000f;
     }
 }

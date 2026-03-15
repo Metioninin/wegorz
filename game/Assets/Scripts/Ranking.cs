@@ -14,6 +14,7 @@ public class Ranking : MonoBehaviour
     bool down = true;
     float progress = 0;
     public float waitTime = 0.5f;
+    public float masksDistance;
 
     List<GameObject> ranking = new List<GameObject>();
     public void SetRanking(List<string> names)
@@ -23,16 +24,18 @@ public class Ranking : MonoBehaviour
         ranking.Clear();
 
         currPos = startPos;
-        foreach(var item in names)
+        for (int i = 0; i < names.Count; i++)
         {
-            GameObject a = Instantiate(label, currPos, Quaternion.identity);
-            a.GetComponent<TextMeshProUGUI>().text = item;
+            var item = names[i];
+            GameObject a = Instantiate(label);
+            a.GetComponentInChildren<TextMeshProUGUI>().text = (i+1).ToString() + ". " + item;
             a.transform.SetParent(transform.GetChild(0).GetChild(0));
+            a.transform.localPosition = currPos;
             currPos.y -= dist;
         }
 
         startScrollingPos = Vector2.zero;
-        endScrollingPos = new Vector2(0, Mathf.Abs(currPos.y - startPos.y));
+        endScrollingPos = new Vector2(0, Mathf.Max(0, Mathf.Abs(currPos.y - startPos.y) - masksDistance));
     }
 
     bool wait = false;
