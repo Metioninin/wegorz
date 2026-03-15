@@ -3,9 +3,28 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEditor.U2D;
 using UnityEngine;
 using UnityEngine.XR;
+
+public class Anim
+{
+    public Transform obj;
+    public Vector3 startPos, endPos;
+    public float progress, speed;
+    public bool scale;
+    public Anim() { }
+    public Anim(Transform obj, Vector3 startPos, Vector3 endPos, float progress, float speed, bool scale)
+    {
+        this.obj = obj;
+        this.startPos = startPos;
+        this.endPos = endPos;
+        this.progress = progress;
+        this.speed = speed;
+        this.scale = scale;
+    }
+}
 
 [Serializable] public class pair
 {
@@ -60,10 +79,10 @@ public class Interpreter : MonoBehaviour
 {
     public GameObject playerObject;
     List<GameObject> players;
-    int playerCount;
+    int playerCount, currentFrame = 1;
     public float refreshRate = 1;
     public float speed = 1;
-    bool isGameStarted = false;
+    bool isGameStarted = false, isGameEnded = false;
     public int k_Unity; //dlugosc boku mapy(krotsza) / st_a
     public float n = 10, m = 15;
     [SerializeField] GameObject winnerArea;
@@ -71,6 +90,8 @@ public class Interpreter : MonoBehaviour
     [SerializeField] Ranking ranking;
     [SerializeField] Transform[] zoneMasks; //LRUD
     [SerializeField] TextMeshProUGUI speedLabel;
+    List<Anim> animations = new List<Anim>();
+    Notation data;
 
     private void Start()
     {
@@ -102,7 +123,7 @@ public class Interpreter : MonoBehaviour
             Notation newData = Notation.Read(file);
             file.Delete();
 
-            StartCoroutine(StartGame(newData));
+            StartGame(newData);
         }
     }
 
@@ -113,16 +134,74 @@ public class Interpreter : MonoBehaviour
         return new Vector2(p.x - m / 2, p.y - n / 2);
     }
 
-    void SetZone(float size)
+    void SetZone(float size, bool init)
     {
-        for (int i = 0; i < 2; i++)
-            zoneMasks[i].localScale = new Vector2(size, 1);
-        for (int i = 2; i < 4; i++)
-            zoneMasks[i].localScale = new Vector2(1, size);
+        if (init)
+        {
+            for (int i = 0; i < 2; i++)
+                zoneMasks[i].localScale = new Vector2(size, 1);
+            for (int i = 2; i < 4; i++)
+                zoneMasks[i].localScale = new Vector2(1, size);
+        }
+        else
+        {
+            for (int i = 0; i < 2; i++)
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, 1, 1), 0, speed, true));
+            for (int i = 2; i < 4; i++)
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(1, size, 1), 0, speed, true));
+        }
     }
-    
-    IEnumerator StartGame(Notation data)
+
+    private void Update()
     {
+        if (animations.Count == 0) return;
+        bool going = false;
+        foreach (var anim in animations)
+            if (anim.progress < 1)
+                going = true;
+        if(!going)
+        {
+            animations.Clear();
+            if(currentFrame == data.framesBottom.Count)
+            {
+                StartCoroutine(EndGame());
+                return;
+            }
+            NextFrame();
+        }
+
+
+        foreach(var item in animations)
+        {
+            if (item.scale)
+                item.obj.localScale = Vector3.Lerp(item.startPos, item.endPos, item.progress);
+            else
+                item.obj.position = Vector3.Lerp(item.startPos, item.endPos, item.progress);
+            item.progress += item.speed;
+        }
+    }
+
+    void NextFrame()
+    {
+        for (int j = 0; j < playerCount; j++)
+        {
+            if (!players[j].activeInHierarchy) continue;
+            if (data.framesTop[currentFrame].moves[j] == new pair(-1, -1)) players[j].SetActive(false);
+            else
+            {
+                animations.Add(new Anim(players[j].transform, players[j].transform.position, WorldPos((data.framesTop[currentFrame].moves[j] + data.framesBottom[currentFrame].moves[j]) / 2), 0, speed, false));
+                float wielBoku = data.framesBottom[currentFrame].moves[j].x - data.framesTop[currentFrame].moves[j].x;
+                animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector2(kratka * wielBoku, kratka * wielBoku), 0, 2f * speed, true));
+            }
+        }
+        SetZone(data.zone[currentFrame] * kratka, false);
+
+        currentFrame++;
+    }
+
+    void StartGame(Notation _data)
+    {
+        data = _data;
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
         players = new List<GameObject>();
@@ -143,26 +222,13 @@ public class Interpreter : MonoBehaviour
             newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255), UnityEngine.Random.Range(0, 255)));
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
-            SetZone(data.zone[i] * kratka);
+            SetZone(data.zone[i] * kratka, true);
         }
+        NextFrame();
+    }
 
-        for (int i = 1; i < data.framesTop.Count; i++)
-        {
-            yield return new WaitForSeconds(1f / speed);
-            for(int j = 0; j < playerCount; j++)
-            {
-                if (!players[j].activeInHierarchy) continue;
-                if (data.framesTop[i].moves[j] == new pair(-1, -1)) players[j].SetActive(false);
-                else
-                {
-                    players[j].transform.position = WorldPos((data.framesTop[i].moves[j] + data.framesBottom[i].moves[j]) / 2);
-                    float wielBoku = data.framesBottom[i].moves[j].x - data.framesTop[i].moves[j].x;
-                    players[j].transform.localScale = new Vector2(kratka * wielBoku, kratka * wielBoku);
-                }
-            }
-            SetZone(data.zone[i] * kratka);
-        }
-
+    IEnumerator EndGame()
+    {
         winnerArea.SetActive(true);
         winnerText.text = data.winner;
         yield return new WaitForSeconds(15f / speed);
