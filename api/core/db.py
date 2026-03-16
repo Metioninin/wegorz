@@ -130,14 +130,28 @@ async def send_submit(conn: AsyncConnection, code: str, lang: str, user_id: int)
     return res[0]
 
 
-async def can_submit(conn: AsyncConnection, user_id: int) -> bool:
+async def is_submit_time(conn: AsyncConnection, user_id: int) -> bool:
     async with conn.cursor() as cur:
         await cur.execute(
             """
             SELECT now() BETWEEN starts_at AND ends_at
             FROM contest c
             JOIN users u ON u.id = %s
-            LIMIT 1
+            """,
+            (user_id,)
+        )
+        res = await cur.fetchone()
+        assert res is not None
+
+    return res[0]
+
+async def has_subms_left(conn: AsyncConnection, user_id: int) -> bool:
+    async with conn.cursor() as cur:
+        await cur.execute(
+            """
+            SELECT COUNT(*) < (SELECT subms_limit FROM contest)
+            FROM submissions s
+            WHERE s.user_id = %s
             """,
             (user_id,)
         )

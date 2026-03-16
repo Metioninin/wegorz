@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
-from api.core.db import can_submit, get_conn, get_subm, send_submit
+from api.core.db import has_subms_left, is_submit_time, get_conn, get_subm, send_submit
 from api.core.models import Submit, User
 from api.core.jinja import templates
 from api.core.utils import gen_logout_redirect
@@ -50,11 +50,21 @@ async def post_submit(
     if user_info is None:
         return gen_logout_redirect()
 
-    if not await can_submit(conn, user_info.id):
+    if not await is_submit_time(conn, user_info.id):
         return templates.TemplateResponse(
             request=request,
             name="send.html",
             context={"error": "Czas na wysyłanie zgłoszeń się nie zaczął lub minął."},
+        )
+
+    # prevent two submits from being in the same time
+    await conn.execute("SELECT pg_advisory_xact_lock(%s)", (user_info.id,))
+
+    if not await has_subms_left(conn, user_info.id):
+        return templates.TemplateResponse(
+            request=request,
+            name="send.html",
+            context={"error": "Osiągnięto maksymalny limit zgłoszeń"},
         )
 
     code_size = len(data.code.encode("utf-8"))
@@ -62,7 +72,9 @@ async def post_submit(
         return templates.TemplateResponse(
             request=request,
             name="send.html",
-            context={"error": "Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB."},
+            context={
+                "error": "Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB."
+            },
         )
 
     if "\x00" in data.code:
