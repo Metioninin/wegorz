@@ -43,11 +43,15 @@
             return;
         }
 
+        if (file.size >= 100 * 1024) {
+            alert("Plik jest za duży (maksimum 100KB).");
+            clearFile();
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = ev => {
             hiddenCode.value = ev.target.result;
-            // The user wanted to keep showing their pasted code in the textarea
-            // but disable it while the file is selected.
             codeArea.disabled = true;
             
             fileInfo.textContent = file.name;
@@ -83,6 +87,21 @@
         if (!hiddenCode.value) {
             hiddenCode.value = codeArea.value;
         }
+
+        const codeContent = hiddenCode.value;
+        const size = new TextEncoder().encode(codeContent).length;
+
+        if (size === 0) {
+            event.preventDefault();
+            alert("Kod nie może być pusty.");
+            return false;
+        }
+        
+        if (size >= 100 * 1024) {
+            event.preventDefault();
+            alert("Kod jest za duży (maksimum 100KB).");
+            return false;
+        }
     }
     </script>
 </head>
@@ -104,7 +123,7 @@
         <h1>Zgłoś rozwiązanie</h1>
 
         <div class="card">
-            <form method="POST" action="/submit" onsubmit="prepareSubmit(event)">
+            <form method="POST" action="/submit" onsubmit="return prepareSubmit(event)">
                 <div class="form-group">
                     <label>Język programowania</label>
                     <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">

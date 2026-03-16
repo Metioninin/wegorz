@@ -57,6 +57,14 @@ async def post_submit(
             context={"error": "Czas na wysyłanie zgłoszeń się nie zaczął lub minął."},
         )
 
+    code_size = len(data.code.encode("utf-8"))
+    if code_size == 0 or code_size >= 100 * 1024:
+        return templates.TemplateResponse(
+            request=request,
+            name="send.html",
+            context={"error": "Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB."},
+        )
+
     subm_id = await send_submit(conn, data.code, data.lang, user_info.login)
     await conn.commit()
 
