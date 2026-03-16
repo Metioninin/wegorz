@@ -223,14 +223,13 @@ public class Interpreter : MonoBehaviour
                 animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2f * speed, true));
             }
         }
-        SetZone(data.zone[currentFrame] * kratka, false);
+        SetZone(data.zone[currentFrame], false);
 
         currentFrame++;
     }
 
     void StartGame(Notation _data)
     {
-        Debug.Log("heyy");
         data = _data;
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
@@ -255,8 +254,8 @@ public class Interpreter : MonoBehaviour
             newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255f, 1));
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
-            SetZone(data.zone[i] * kratka, true);
         }
+        SetZone(data.zone[0], true);
         NextFrame();
     }
 
