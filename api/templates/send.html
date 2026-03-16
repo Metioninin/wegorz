@@ -1,51 +1,148 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Code Submission</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zgłoś rozwiązanie - Węgorz</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        textarea:disabled {
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+        }
+        .file-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        #file-name-info {
+            font-size: 0.875rem;
+            color: var(--primary-color);
+            font-weight: 500;
+            display: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 250px;
+        }
+    </style>
+    <script>
+    function handleFile(e) {
+        const file = e.target.files[0];
+        const codeArea = document.getElementById('code');
+        const hiddenCode = document.getElementById('hidden-code');
+        const clearBtn = document.getElementById('clear-file');
+        const fileInfo = document.getElementById('file-name-info');
+        const uploadLabel = document.getElementById('upload-label');
+        
+        if (!file) {
+            clearFile();
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = ev => {
+            hiddenCode.value = ev.target.result;
+            // The user wanted to keep showing their pasted code in the textarea
+            // but disable it while the file is selected.
+            codeArea.disabled = true;
+            
+            fileInfo.textContent = file.name;
+            fileInfo.style.display = "block";
+            clearBtn.style.display = "inline-flex";
+            uploadLabel.style.display = "none";
+        };
+        reader.onerror = () => alert('Błąd odczytu pliku.');
+        reader.readAsText(file);
+    }
+
+    function clearFile() {
+        const fileInput = document.getElementById('fileInput');
+        const codeArea = document.getElementById('code');
+        const hiddenCode = document.getElementById('hidden-code');
+        const clearBtn = document.getElementById('clear-file');
+        const fileInfo = document.getElementById('file-name-info');
+        const uploadLabel = document.getElementById('upload-label');
+
+        fileInput.value = "";
+        hiddenCode.value = "";
+        codeArea.disabled = false;
+        
+        fileInfo.style.display = "none";
+        clearBtn.style.display = "none";
+        uploadLabel.style.display = "inline-block";
+    }
+
+    function prepareSubmit(event) {
+        const codeArea = document.getElementById('code');
+        const hiddenCode = document.getElementById('hidden-code');
+        
+        if (!hiddenCode.value) {
+            hiddenCode.value = codeArea.value;
+        }
+    }
+    </script>
 </head>
 <body>
-  <h1>Code Submission</h1>
+    <header>
+        <nav>
+            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">Węgorz</a>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <a href="/submit">Zgłoś rozwiązanie</a>
+                <a href="/change-password">Zmień hasło</a>
+                <form action="/logout" method="POST" style="display:inline; margin: 0;">
+                    <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Wyloguj</button>
+                </form>
+            </div>
+        </nav>
+    </header>
 
-  <form method="POST" action="/submit" enctype="multipart/form-data">
-    <p>
-      <label><b>Language:</b></label><br>
-      <label><input type="radio" name="lang" value="CPP" checked> C++</label>
-      &nbsp;
-      <label><input type="radio" name="lang" value="PY"> Python</label>
-    </p>
+    <div class="container">
+        <h1>Zgłoś rozwiązanie</h1>
 
-    <p>
-      <label for="fileInput"><b>Upload a file:</b></label><br>
-      <input type="file" id="fileInput" name="file" onchange="loadFile(event)">
-    </p>
+        <div class="card">
+            <form method="POST" action="/submit" onsubmit="prepareSubmit(event)">
+                <div class="form-group">
+                    <label>Język programowania</label>
+                    <div style="display: flex; gap: 1.5rem; margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400; color: var(--text-color); cursor: pointer;">
+                            <input type="radio" name="lang" value="CPP" checked style="width: auto;"> C++
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 400; color: var(--text-color); cursor: pointer;">
+                            <input type="radio" name="lang" value="PY" style="width: auto;"> Python
+                        </label>
+                    </div>
+                </div>
 
-    <p>
-      <label for="code"><b>Or paste code here:</b></label><br>
-      <textarea id="code" name="code" rows="15" cols="80" placeholder="Paste your code here..."></textarea>
-    </p>
+                <div class="form-group">
+                    <label>Wgraj plik</label>
+                    <div class="file-input-wrapper">
+                        <label for="fileInput" id="upload-label" class="custom-file-upload">Wybierz plik</label>
+                        <input type="file" id="fileInput" onchange="handleFile(event)" style="display:none">
+                        
+                        <span id="file-name-info"></span>
+                        <button type="button" id="clear-file" class="btn-x" style="display: none;" onclick="clearFile()" title="Usuń plik">✕</button>
+                    </div>
+                </div>
 
-    <p>
-      <button type="submit">Submit</button>
-        {% if error %}
-            <p style="color:red">{{ error }}</p>
-        {% endif %}
-    </p>
-  </form>
-  
-  <p><a href="/">Wróć</a></p>
+                <div class="form-group">
+                    <label for="code">Lub wklej kod tutaj</label>
+                    <textarea id="code" rows="15" placeholder="Wklej swój kod tutaj..."></textarea>
+                </div>
 
-  <script>
-    function loadFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        document.getElementById('code').value = ev.target.result;
-      };
-      reader.onerror = () => alert('Could not read file.');
-      reader.readAsText(file);
-    }
-  </script>
+                <input type="hidden" name="code" id="hidden-code">
+
+                <div style="margin-top: 1rem;">
+                    <button type="submit" style="width: 100%;">Zgłoś rozwiązanie</button>
+                    {% if error %}
+                        <p class="error mt-4">{{ error }}</p>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

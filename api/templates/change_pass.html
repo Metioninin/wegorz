@@ -1,65 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-<title>Zmiana hasła</title>
-<script>
-function validatePassword(event) {
-    event.preventDefault();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zmiana hasła - Węgorz</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+    function validatePassword(event) {
+        event.preventDefault();
 
-    const currPass = document.querySelector('input[name="current_password"]').value;
-    const newPass = document.querySelector('input[name="new_password"]').value;
-    const confirmPass = document.querySelector('input[name="confirm_password"]').value;
-    const errorMsg = document.getElementById('error-msg');
-    errorMsg.textContent = '';
+        const currPass = document.querySelector('input[name="current_password"]').value;
+        const newPass = document.querySelector('input[name="new_password"]').value;
+        const confirmPass = document.querySelector('input[name="confirm_password"]').value;
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
 
-    // Length check
-    const pairs = [['Aktualne hasło', currPass], ['Nowe hasło', newPass]];
-    for (const [passname, value] of pairs) {
-        if (value.length < 8 || value.length > 72) {
-            errorMsg.textContent = `${passname} musi mieć od 8 do 72 znaków.`;
+        // Length check
+        const pairs = [['Aktualne hasło', currPass], ['Nowe hasło', newPass]];
+        for (const [passname, value] of pairs) {
+            if (value.length < 8 || value.length > 72) {
+                errorMsg.textContent = `${passname} musi mieć od 8 do 72 znaków.`;
+                errorMsg.style.display = 'block';
+                return false;
+            }
+        }
+
+        if (currPass === newPass) {
+            errorMsg.textContent = 'Nowe hasło musi różnić się od aktualnego.';
+            errorMsg.style.display = 'block';
             return false;
         }
-    }
 
-    if (currPass === newPass) {
-        errorMsg.textContent = 'Nowe hasło musi różnić się od aktualnego.';
-        return false;
-    }
+        if (newPass !== confirmPass) {
+            errorMsg.textContent = 'Nowe hasło i potwierdzenie hasła muszą być takie same.';
+            errorMsg.style.display = 'block';
+            return false;
+        }
 
-    if (newPass !== confirmPass) {
-        errorMsg.textContent = 'Nowe hasło i potwierdzenie hasła muszą być takie same.';
-        return false;
+        event.target.submit();
     }
-
-    event.target.submit();
-}
-</script>
+    </script>
 </head>
 <body>
-<h2>Zmiana hasła</h2>
+    <header>
+        <nav>
+            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">Węgorz</a>
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <a href="/submit">Zgłoś rozwiązanie</a>
+                <a href="/change-password">Zmień hasło</a>
+                <form action="/logout" method="POST" style="display:inline; margin: 0;">
+                    <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Wyloguj</button>
+                </form>
+            </div>
+        </nav>
+    </header>
 
-<p id="error-msg" style="color:red"></p>
+    <div class="container">
+        <h1>Zmiana hasła</h1>
 
-{% if error %}
-<p style="color:red">{{ error }}</p>
-{% endif %}
-{% if success %}
-<p style="color:green">{{ success }}</p>
-{% endif %}
+        <div class="card" style="max-width: 500px; margin: 0 auto;">
+            <p id="error-msg" class="error mb-4" style="display:none"></p>
 
-<form action="/change-password" method="post" onsubmit="validatePassword(event)">
-<label>Aktualne hasło</label><br>
-<input type="password" name="current_password" required><br><br>
+            {% if error %}
+            <p class="error mb-4">{{ error }}</p>
+            {% endif %}
+            {% if success %}
+            <p class="success mb-4">{{ success }}</p>
+            {% endif %}
 
-<label>Nowe hasło</label><br>
-<input type="password" name="new_password" required><br><br>
+            <form action="/change-password" method="post" onsubmit="validatePassword(event)">
+                <div class="form-group">
+                    <label for="current_password">Aktualne hasło</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
 
-<label>Potwierdź nowe hasło</label><br>
-<input type="password" name="confirm_password" required><br><br>
+                <div class="form-group">
+                    <label for="new_password">Nowe hasło</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
 
-<button type="submit">Zmień hasło</button>
-</form>
+                <div class="form-group">
+                    <label for="confirm_password">Potwierdź nowe hasło</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
 
-<p><a href="/">Wróć</a></p>
+                <button type="submit" style="margin-top: 1rem;">Zmień hasło</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
