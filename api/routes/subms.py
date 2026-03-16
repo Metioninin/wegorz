@@ -65,6 +65,13 @@ async def post_submit(
             context={"error": "Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB."},
         )
 
+    if "\x00" in data.code:
+        return templates.TemplateResponse(
+            request=request,
+            name="send.html",
+            context={"error": "Kod nie może zawierać bajtów zerowych (null bytes)."},
+        )
+
     subm_id = await send_submit(conn, data.code, data.lang, user_info.login)
     await conn.commit()
 

@@ -51,7 +51,13 @@
 
         const reader = new FileReader();
         reader.onload = ev => {
-            hiddenCode.value = ev.target.result;
+            const content = ev.target.result;
+            if (content.includes('\0')) {
+                alert("Plik zawiera niedozwolone znaki i może być nieprawidłowy.");
+                clearFile();
+                return;
+            }
+            hiddenCode.value = content;
             codeArea.disabled = true;
             
             fileInfo.textContent = file.name;
@@ -89,6 +95,13 @@
         }
 
         const codeContent = hiddenCode.value;
+        
+        if (codeContent.includes('\0')) {
+            event.preventDefault();
+            alert("Kod nie może zawierać bajtów zerowych (null bytes).");
+            return false;
+        }
+
         const size = new TextEncoder().encode(codeContent).length;
 
         if (size === 0) {
