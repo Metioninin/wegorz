@@ -67,8 +67,35 @@
 
         <div class="card">
             <h2>Kod źródłowy</h2>
-            <pre class="code-block"><code>{{ submission.code }}</code></pre>
+            <div class="code-wrapper">
+                <pre id="submissionCode" class="code-block collapsed"><code>{{ submission.code }}</code></pre>
+                <button id="toggleBtn" class="expand-btn" onclick="toggleCode()">Rozwiń kod</button>
+            </div>
         </div>
     </div>
+
+    <script>
+        function toggleCode() {
+            const codePre = document.getElementById('submissionCode');
+            const btn = document.getElementById('toggleBtn');
+            if (codePre.classList.contains('collapsed')) {
+                codePre.classList.remove('collapsed');
+                btn.textContent = 'Zwiń kod';
+            } else {
+                codePre.classList.add('collapsed');
+                btn.textContent = 'Rozwiń kod';
+            }
+        }
+
+        // Hide button if code is short
+        window.addEventListener('load', () => {
+            const codePre = document.getElementById('submissionCode');
+            const btn = document.getElementById('toggleBtn');
+            if (codePre.scrollHeight <= 1000) {
+                codePre.classList.remove('collapsed');
+                btn.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

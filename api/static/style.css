@@ -281,6 +281,45 @@ tr:hover {
     word-break: break-all;
 }
 
+/* Expandable code block */
+.code-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.code-block.collapsed {
+    max-height: 1000px;
+    overflow: hidden;
+    position: relative;
+}
+
+.code-block.collapsed::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(transparent, #1e293b);
+    pointer-events: none;
+}
+
+.expand-btn {
+    background-color: var(--card-bg);
+    color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    margin-top: -0.5rem;
+    width: 100%;
+    border-top: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+.expand-btn:hover {
+    background-color: #f1f5f9;
+}
+
 /* Utilities */
 .text-center { text-align: center; }
 .mt-4 { margin-top: 1rem; }
