@@ -21,7 +21,7 @@ async def get_submission_details(
     if user_info is None:
         raise HTTPException(404)
 
-    subm = await get_subm(conn, subm_id, user_info.login)
+    subm = await get_subm(conn, subm_id, user_info.id)
 
     if subm is None:
         raise HTTPException(404)
@@ -50,7 +50,7 @@ async def post_submit(
     if user_info is None:
         return gen_logout_redirect()
 
-    if not await can_submit(conn, user_info.login):
+    if not await can_submit(conn, user_info.id):
         return templates.TemplateResponse(
             request=request,
             name="send.html",
@@ -72,7 +72,7 @@ async def post_submit(
             context={"error": "Kod nie może zawierać bajtów zerowych (null bytes)."},
         )
 
-    subm_id = await send_submit(conn, data.code, data.lang, user_info.login)
+    subm_id = await send_submit(conn, data.code, data.lang, user_info.id)
     await conn.commit()
 
     return RedirectResponse(f"/submission/{subm_id}", status_code=303)

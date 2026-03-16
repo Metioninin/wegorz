@@ -16,9 +16,13 @@ async def get_user_info(
     async with conn.cursor(row_factory=dict_row) as cur:
         await cur.execute(
             """
-            SELECT id AS session, login
-            FROM sessions
-            WHERE id = %s
+            SELECT 
+                u.id AS id, 
+                s.id AS session,
+                u.login AS login
+            FROM sessions s
+            JOIN users u ON u.id = s.user_id
+            WHERE s.id = %s
             """,
             (session,),
         )

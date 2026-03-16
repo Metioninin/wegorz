@@ -101,18 +101,18 @@ async def post_change_password(
         """
         UPDATE users
         SET password_hash = crypt(%s, gen_salt('bf'))
-        WHERE login = %s
+        WHERE id = %s
         """,
-        (data.new_password, user_info.login),
+        (data.new_password, user_info.id),
     )
 
     # clear previous sessions and create new
     await conn.execute(
         """
         DELETE FROM sessions
-        WHERE login = %s
+        WHERE user_id = %s
         """,
-        (user_info.login,),
+        (user_info.id,),
     )
     session = await create_session(conn, user_info.login)
 

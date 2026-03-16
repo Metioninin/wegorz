@@ -38,7 +38,7 @@ async def homepage(
     conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is not None:
-        subms = await get_subms(conn, user_info.login)
+        subms = await get_subms(conn, user_info.id)
     else:
         subms = None
 

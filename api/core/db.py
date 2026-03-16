@@ -40,15 +40,25 @@ async def is_password_valid(conn: AsyncConnection, login: str, password: str) ->
 async def create_session(conn: AsyncConnection, login: str) -> Optional[str]:
     async with conn.cursor() as cur:
         # lock user to ensure session won't be created after changing it
-        await cur.execute("SELECT 1 FROM users WHERE login = %s FOR SHARE", (login,))
+        await cur.execute(
+            """
+            SELECT id 
+            FROM users 
+            WHERE login = %s 
+            FOR SHARE
+            """, 
+            (login,)
+        )
+        res = await cur.fetchone()
+        assert res is not None
 
         await cur.execute(
             """
-            INSERT INTO sessions (id, login)
+            INSERT INTO sessions (id, user_id)
             VALUES (encode(gen_random_bytes(16), 'hex'), %s)
             RETURNING id
             """,
-            (login,),
+            (res[0],),
         )
         res = await cur.fetchone()
 
@@ -68,7 +78,7 @@ async def delete_session(conn: AsyncConnection, session: str) -> None:
     )
 
 
-async def get_subms(conn: AsyncConnection, user: str) -> list[Submission]:
+async def get_subms(conn: AsyncConnection, user_id: int) -> list[Submission]:
     columns = [sql.Identifier(column) for column in Submission.model_fields]
 
     async with conn.cursor(row_factory=dict_row) as cur:
@@ -80,13 +90,13 @@ async def get_subms(conn: AsyncConnection, user: str) -> list[Submission]:
                 WHERE user_id = %s
                 """,
             ).format(sql.SQL(", ").join(columns)),
-            (user,),
+            (user_id,),
         )
         res = await cur.fetchall()
     return [Submission(**row) for row in res]
 
 
-async def get_subm(conn: AsyncConnection, subm_id: int, user: str) -> SubmissionDetail | None:
+async def get_subm(conn: AsyncConnection, subm_id: int, user_id: int) -> SubmissionDetail | None:
     columns = [sql.Identifier(column) for column in SubmissionDetail.model_fields]
 
     async with conn.cursor(row_factory=dict_row) as cur:
@@ -98,14 +108,14 @@ async def get_subm(conn: AsyncConnection, subm_id: int, user: str) -> Submission
                 WHERE id = %s AND user_id = %s
                 """
             ).format(sql.SQL(", ").join(columns)),
-            (subm_id, user),
+            (subm_id, user_id),
         )
         res = await cur.fetchone()
 
     return SubmissionDetail(**res) if res else None
 
 
-async def send_submit(conn: AsyncConnection, code: str, lang: str, user_id: str) -> int:
+async def send_submit(conn: AsyncConnection, code: str, lang: str, user_id: int) -> int:
     async with conn.cursor() as cur:
         await cur.execute(
             """
@@ -120,13 +130,13 @@ async def send_submit(conn: AsyncConnection, code: str, lang: str, user_id: str)
     return res[0]
 
 
-async def can_submit(conn: AsyncConnection, user_id: str) -> bool:
+async def can_submit(conn: AsyncConnection, user_id: int) -> bool:
     async with conn.cursor() as cur:
         await cur.execute(
             """
             SELECT now() BETWEEN starts_at AND ends_at
             FROM contest c
-            JOIN users u ON u.login = %s
+            JOIN users u ON u.id = %s
             LIMIT 1
             """,
             (user_id,)
