@@ -17,12 +17,17 @@
     box-sizing: border-box;
 }
 
+html {
+    background-color: var(--bg-color);
+}
+
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
     margin: 0;
     line-height: 1.5;
+    min-height: 100vh;
 }
 
 .container {
