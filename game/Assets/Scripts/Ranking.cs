@@ -28,7 +28,9 @@ public class Ranking : MonoBehaviour
         {
             var item = names[i];
             GameObject a = Instantiate(label);
-            a.GetComponentInChildren<TextMeshProUGUI>().text = (i+1).ToString() + ". " + item;
+            a.GetComponent<Label>().text.text = (i + 1).ToString() + ". " + item;
+            if (i > 2) a.GetComponent<Label>().badge.gameObject.SetActive(false);
+            else a.GetComponent<Label>().badge.sprite = a.GetComponent<Label>().badgeSprites[i];
             a.transform.SetParent(transform.GetChild(0).GetChild(0));
             a.transform.localPosition = currPos;
             currPos.y -= dist;

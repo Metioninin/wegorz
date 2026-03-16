@@ -78,7 +78,7 @@ public class Anim
 public class Interpreter : MonoBehaviour
 {
     public GameObject playerObject;
-    List<GameObject> players;
+    List<GameObject> players = new List<GameObject>();
     int playerCount, currentFrame = 1;
     public float refreshRate = 1;
     float speed = 1;
@@ -176,6 +176,9 @@ public class Interpreter : MonoBehaviour
             for (int i = 2; i < 4; i++)
                 animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, speed, true));
         }
+
+        for (int i = 0; i < 2; i++)
+            zoneMasks[i].localScale = new Vector2(zoneMasks[i].localScale.x, n - 2 * zoneMasks[i].localScale.x);
     }
 
     private void Update()
@@ -205,6 +208,10 @@ public class Interpreter : MonoBehaviour
                 item.obj.position = Vector3.Lerp(item.startPos, item.endPos, item.progress);
             item.progress += item.speed;
         }
+
+        for(int i = 0; i < 2; i++)
+            zoneMasks[i].localScale = new Vector2(zoneMasks[i].localScale.x, n - 2 * zoneMasks[i].localScale.x);
+        
     }
 
     void NextFrame()
@@ -223,7 +230,7 @@ public class Interpreter : MonoBehaviour
                 animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2f * speed, true));
             }
         }
-        SetZone(data.zone[currentFrame], false);
+        SetZone(data.zone[currentFrame] * kratka, false);
 
         currentFrame++;
     }
@@ -233,36 +240,32 @@ public class Interpreter : MonoBehaviour
         data = _data;
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
+        foreach (var player in players) { Destroy(player); }
         players = new List<GameObject>();
         playerCount = data.playerNames.Count;
         kratka = (float)k_Unity / data.k;
-
-        zoneMasks[0].GetChild(0).localPosition = new Vector2(kratka / 2, 0); //l
-        zoneMasks[1].GetChild(0).localPosition = new Vector2(-kratka / 2, 0); //r
-        zoneMasks[0].GetChild(0).localScale = zoneMasks[1].GetChild(0).localScale = new Vector2(kratka, 1); //lr
-
-        zoneMasks[2].GetChild(0).localPosition = new Vector2(0, -kratka / 2); //u
-        zoneMasks[3].GetChild(0).localPosition = new Vector2(0, kratka / 2); //d
-        zoneMasks[2].GetChild(0).localScale = zoneMasks[3].GetChild(0).localScale = new Vector2(1, kratka); //du
-
+        animations = new List<Anim>();
+        currentFrame = 1;
 
         zoneMasks[0].localScale = zoneMasks[1].localScale = new Vector2(0, n); //lr
         zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
         for (int i = 0; i < playerCount; i++)
         {
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
-            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], new Color(UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255, UnityEngine.Random.Range(0, 255) / 255f, 1));
+            System.Random random = new System.Random();
+            Color color = new Color((float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, 1);
+            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], color);
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
         }
-        SetZone(data.zone[0], true);
+        SetZone(data.zone[0] * kratka, true);
         NextFrame();
     }
 
     IEnumerator EndGame()
     {
-        foreach (var player in players) { Destroy(player); }
-        players.Clear();
+        yield return new WaitForSeconds(1 / speed2);
+
         winnerArea.SetActive(true);
         winnerText.text = data.playerNames[0];
         yield return new WaitForSeconds(5 / speed2);
