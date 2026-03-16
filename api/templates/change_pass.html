@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zmiana hasła - Węgorz</title>
+    <title>Zmiana hasła - {{ website }}</title>
     <link rel="stylesheet" href="/static/style.css">
     <script>
     function validatePassword(event) {
@@ -45,7 +45,7 @@
 <body>
     <header>
         <nav>
-            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">Węgorz</a>
+            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">{{ website }}</a>
             <div style="display: flex; gap: 1.5rem; align-items: center;">
                 <a href="/submit">Zgłoś rozwiązanie</a>
                 <a href="/change-password">Zmień hasło</a>
