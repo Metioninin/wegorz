@@ -60,7 +60,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 7
   m_TargetDisplay: 0
 --- !u!114 &2718458752334265715
 MonoBehaviour:
@@ -349,4 +349,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca8e036746397c14f9a0e8da8243a8fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offset: {x: 0.15, y: -0.15, z: 0}
+  offset: {x: 0.075, y: -0.075, z: 0}

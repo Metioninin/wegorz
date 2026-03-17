@@ -294,7 +294,6 @@ public class Interpreter : MonoBehaviour
         float x = WorldPos(new pair(1, 0)).x;
         while(x < m / 2)
         {
-            Debug.Log(x);
             var obj = Instantiate(gridObject, new Vector2(x, 0), Quaternion.identity);
             obj.transform.localScale = new Vector2(kratka * gridThickness, n);
             grid.Add(obj);
@@ -303,7 +302,6 @@ public class Interpreter : MonoBehaviour
         float y = WorldPos(new pair(0, 1)).y;
         while(y < n / 2)
         {
-            Debug.Log(y);
             var obj = Instantiate(gridObject, new Vector2(0, y), Quaternion.identity);
             obj.transform.localScale = new Vector2(m, kratka * gridThickness);
             grid.Add(obj);
