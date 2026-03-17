@@ -8,6 +8,5 @@ public class Label : MonoBehaviour
 {
     public TextMeshProUGUI text;
     public Image badge;
-
     public Sprite[] badgeSprites;
 }

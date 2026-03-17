@@ -12,9 +12,11 @@ public class Ranking : MonoBehaviour
     public Transform mover;
     public float scrollingSpeed = 1;
     bool down = true;
+    public float finalistsPercent = .1f;
     float progress = 0;
     public float waitTime = 0.5f;
     public float masksDistance;
+    public int startIndex = 0;
 
     List<GameObject> ranking = new List<GameObject>();
     public void SetRanking(List<string> names)
@@ -24,14 +26,14 @@ public class Ranking : MonoBehaviour
         ranking.Clear();
 
         currPos = startPos;
-        for (int i = 0; i < names.Count; i++)
+        for (int i = startIndex; i < names.Count; i++)
         {
             var item = names[i];
             GameObject a = Instantiate(label);
             a.GetComponent<Label>().text.text = (i + 1).ToString() + ". " + item;
-            if (i > 2) a.GetComponent<Label>().badge.gameObject.SetActive(false);
-            else a.GetComponent<Label>().badge.sprite = a.GetComponent<Label>().badgeSprites[i];
-            a.transform.SetParent(transform.GetChild(0).GetChild(0));
+            if ((float)i / names.Count > finalistsPercent) a.GetComponent<Label>().badge.gameObject.SetActive(false);
+            //else a.GetComponent<Label>().badge.sprite = a.GetComponent<Label>().badgeSprites[i];
+            a.transform.SetParent(mover);
             a.transform.localPosition = currPos;
             currPos.y -= dist;
         }

@@ -67,6 +67,7 @@ public class Anim
     public List<Moves> framesTop;
     public List<Moves> framesBottom;
     public List<int> zone;
+    public List<string> ranking;
     public Notation(){}
 
     public static Notation Read(FileInfo file)
@@ -78,7 +79,7 @@ public class Anim
 public class Interpreter : MonoBehaviour
 {
     public GameObject playerObject;
-    List<GameObject> players = new List<GameObject>();
+    List<GameObject> players = new List<GameObject>(), grid = new List<GameObject>();
     int playerCount, currentFrame = 1;
     public float refreshRate = 1;
     float speed = 1;
@@ -86,13 +87,17 @@ public class Interpreter : MonoBehaviour
     bool isGameStarted = false;
     public int k_Unity; //dlugosc boku mapy(krotsza) / st_a
     public float n = 10, m = 15;
-    [SerializeField] GameObject winnerArea;
+    [SerializeField] GameObject winnerArea, gridObject;
+    public float gridThickness;
     [SerializeField] TextMeshProUGUI winnerText;
     [SerializeField] Ranking ranking;
     [SerializeField] Transform[] zoneMasks; //LRUD
     [SerializeField] TextMeshProUGUI speedLabel;
     List<Anim> animations = new List<Anim>();
     Notation data;
+    [SerializeField] AudioSource src;
+
+    [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
 
     private void Start()
     {
@@ -221,6 +226,7 @@ public class Interpreter : MonoBehaviour
             if (!players[j].activeInHierarchy) continue;
             if (data.framesTop[currentFrame].moves[j].x == -1)
             {
+                src.PlayOneShot(popSfx);
                 players[j].SetActive(false);
             }
             else
@@ -237,6 +243,7 @@ public class Interpreter : MonoBehaviour
 
     void StartGame(Notation _data)
     {
+        src.PlayOneShot(startGameSfx);
         data = _data;
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
@@ -247,6 +254,7 @@ public class Interpreter : MonoBehaviour
         animations = new List<Anim>();
         currentFrame = 1;
 
+        GenerateGrid();
         zoneMasks[0].localScale = zoneMasks[1].localScale = new Vector2(0, n); //lr
         zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
         for (int i = 0; i < playerCount; i++)
@@ -266,14 +274,41 @@ public class Interpreter : MonoBehaviour
     {
         yield return new WaitForSeconds(1 / speed2);
 
+        src.PlayOneShot(winSfx);
         winnerArea.SetActive(true);
         winnerText.text = data.playerNames[0];
+        winnerArea.GetComponent<Ranking>().SetRanking(data.playerNames);
         yield return new WaitForSeconds(5 / speed2);
         winnerArea.SetActive(false);
 
         ranking.gameObject.SetActive(true);
-        ranking.SetRanking(data.playerNames);
+        ranking.SetRanking(data.ranking);
         isGameStarted = false;
+    }
+
+    void GenerateGrid()
+    {
+        foreach (var item in grid)
+            Destroy(item);
+        grid.Clear();
+        float x = WorldPos(new pair(1, 0)).x;
+        while(x < m / 2)
+        {
+            Debug.Log(x);
+            var obj = Instantiate(gridObject, new Vector2(x, 0), Quaternion.identity);
+            obj.transform.localScale = new Vector2(kratka * gridThickness, n);
+            grid.Add(obj);
+            x += kratka;
+        }
+        float y = WorldPos(new pair(0, 1)).y;
+        while(y < n / 2)
+        {
+            Debug.Log(y);
+            var obj = Instantiate(gridObject, new Vector2(0, y), Quaternion.identity);
+            obj.transform.localScale = new Vector2(m, kratka * gridThickness);
+            grid.Add(obj);
+            y += kratka;
+        }
     }
 
     public void MoreSpeed()
