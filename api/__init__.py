@@ -4,7 +4,7 @@ from api.routes import home, subms
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static/css", StaticFiles(directory="static/css"), name="static/css")
 
 
 for module in (home, subms):

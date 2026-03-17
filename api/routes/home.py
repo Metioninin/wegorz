@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, Form, Request, Response
-from fastapi.responses import RedirectResponse
+from datetime import datetime, UTC
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
+from fastapi.responses import FileResponse, RedirectResponse
 from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
@@ -7,6 +8,7 @@ from api.core.db import (
     create_session,
     delete_session,
     get_conn,
+    get_settings,
     get_subms,
     is_password_valid,
 )
@@ -32,6 +34,7 @@ async def gen_homepage_template(
         "logged_in": logged_in,
         "login_error": login_error,
         "submissions": submissions,
+        "now": datetime.now(UTC),
     }
     if logged_in:
         context |= await get_contest_settings(conn)
@@ -183,3 +186,19 @@ async def post_change_password(
     )
     response.set_cookie("session", session, secure=True, httponly=True)
     return response
+
+
+@router.get("/statement")
+async def statement(
+    user_info: User | None = Depends(get_user_info),
+    conn: AsyncConnection = Depends(get_conn)
+) -> Response:
+    if user_info is None:
+        return RedirectResponse("/", status_code=303)
+
+    settings = await get_settings(conn)
+        
+    if datetime.now().astimezone() < settings.starts_at:
+        raise HTTPException(403)
+
+    return FileResponse("static/tresc.pdf")
