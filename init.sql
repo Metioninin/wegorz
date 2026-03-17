@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS submissions(
 CREATE INDEX idx_submissions_user ON submissions(user_id);
 
 
-CREATE TABLE IF NOT EXISTS contest(
+CREATE TABLE IF NOT EXISTS settings(
     starts_at TIMESTAMPTZ NOT NULL,
     ends_at TIMESTAMPTZ NOT NULL,
     subms_limit INT NOT NULL,
@@ -47,10 +47,10 @@ CREATE TABLE IF NOT EXISTS contest(
 );
 
 
-INSERT INTO contest (subms_limit, starts_at, ends_at)
+INSERT INTO settings (subms_limit, starts_at, ends_at)
 VALUES (25, now() - INTERVAL '60 days', now() + INTERVAL '61 days');
 
-REVOKE INSERT, DELETE ON contest FROM PUBLIC;
+REVOKE INSERT, DELETE ON settings FROM PUBLIC;
 
 
 -- TODO: delete when building for production

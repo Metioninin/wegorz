@@ -135,7 +135,7 @@ async def is_submit_time(conn: AsyncConnection, user_id: int) -> bool:
         await cur.execute(
             """
             SELECT now() BETWEEN starts_at AND ends_at
-            FROM contest c
+            FROM settings c
             JOIN users u ON u.id = %s
             """,
             (user_id,)
@@ -149,7 +149,7 @@ async def has_subms_left(conn: AsyncConnection, user_id: int) -> bool:
     async with conn.cursor() as cur:
         await cur.execute(
             """
-            SELECT COUNT(*) < (SELECT subms_limit FROM contest)
+            SELECT COUNT(*) < (SELECT subms_limit FROM settings)
             FROM submissions s
             WHERE s.user_id = %s
             """,
