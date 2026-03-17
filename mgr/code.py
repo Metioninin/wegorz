@@ -15,6 +15,9 @@ class Move(Enum):
 @dataclass
 class Code:
     username: str
-    
+    top_x: int
+    top_y: int
+    bot_x: int
+    bot_y: int
     def get_move(self, context: Any) -> Move | None:
         return choice(tuple(Move))
