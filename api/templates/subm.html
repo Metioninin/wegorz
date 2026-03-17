@@ -1,79 +1,62 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zgłoszenie #{{ submission.id }} - {{ website }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">{{ website }}</a>
-            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <a href="/submit">Zgłoś rozwiązanie</a>
-                <a href="/change-password">Zmień hasło</a>
-                <form action="/logout" method="POST" style="display:inline; margin: 0;">
-                    <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Wyloguj</button>
-                </form>
-            </div>
-        </nav>
-    </header>
+{% extends "base.html" %}
 
-    <div class="container">
-        <h1>Zgłoszenie #{{ submission.id }}</h1>
+{% block title %}Zgłoszenie #{{ submission.id }} - {{ website }}{% endblock %}
 
-        <div class="card">
-            <h2>Informacje</h2>
-            <div class="table-container">
-                <table>
-                    <tbody>
-                        <tr>
-                            <th style="width: 200px;">Język</th>
-                            <td>
-                                {% if submission.lang == 'CPP' %}C++
-                                {% elif submission.lang == 'PY' %}Python
-                                {% else %}{{ submission.lang }}{% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Status</th>
-                            <td>
-                                <span class="status-badge status-{{ submission.status|lower|replace(' ', '-') }}">{{ submission.status }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Data wysłania</th>
-                            <td>{{ submission.send_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+{% block content %}
+    <h1>Zgłoszenie #{{ submission.id }}</h1>
 
-        <div class="card">
-            <h2>Szczegóły</h2>
-            <div class="table-container">
-                <table>
-                    <tbody>
-                        <tr>
-                            <th style="width: 200px;">Wiadomość</th>
-                            <td>{{ submission.status_msg }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>Kod źródłowy</h2>
-            <div class="code-wrapper">
-                <pre id="submissionCode" class="code-block collapsed"><code>{{ submission.code }}</code></pre>
-                <button id="toggleBtn" class="expand-btn" onclick="toggleCode()">Rozwiń kod</button>
-            </div>
+    <div class="card">
+        <h2>Informacje</h2>
+        <div class="table-container">
+            <table>
+                <tbody>
+                    <tr>
+                        <th style="width: 200px;">Język</th>
+                        <td>
+                            {% if submission.lang == 'CPP' %}C++
+                            {% elif submission.lang == 'PY' %}Python
+                            {% else %}{{ submission.lang }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            <span class="status-badge status-{{ submission.status|lower|replace(' ', '-') }}">{{ submission.status }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Data wysłania</th>
+                        <td>{{ submission.send_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
+    <div class="card">
+        <h2>Szczegóły</h2>
+        <div class="table-container">
+            <table>
+                <tbody>
+                    <tr>
+                        <th style="width: 200px;">Wiadomość</th>
+                        <td>{{ submission.status_msg }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Kod źródłowy</h2>
+        <div class="code-wrapper">
+            <pre id="submissionCode" class="code-block collapsed"><code>{{ submission.code }}</code></pre>
+            <button id="toggleBtn" class="expand-btn" onclick="toggleCode()">Rozwiń kod</button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
     <script>
         function toggleCode() {
             const codePre = document.getElementById('submissionCode');
@@ -91,11 +74,10 @@
         window.addEventListener('load', () => {
             const codePre = document.getElementById('submissionCode');
             const btn = document.getElementById('toggleBtn');
-            if (codePre.scrollHeight <= 1000) {
+            if (codePre && codePre.scrollHeight <= 1000) {
                 codePre.classList.remove('collapsed');
                 btn.style.display = 'none';
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

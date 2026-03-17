@@ -1,0 +1,87 @@
+{% if contest_settings %}
+<div id="contest-timer" class="timer-container" style="display: none;">
+    <div id="progress-container" class="progress-container" style="display: none;">
+        <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <div id="timer-text" class="timer-text"></div>
+</div>
+
+<script>
+(function() {
+    const startsAt = new Date("{{ contest_settings.starts_at.isoformat() }}").getTime();
+    const endsAt = new Date("{{ contest_settings.ends_at.isoformat() }}").getTime();
+    const timerContainer = document.getElementById('contest-timer');
+    const timerText = document.getElementById('timer-text');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        
+        if (now < startsAt) {
+            // Before contest
+            timerContainer.style.display = 'block';
+            const diff = startsAt - now;
+            timerText.textContent = formatDiff(diff) + " do rozpoczęcia";
+            progressContainer.style.display = 'none';
+            
+            if (diff <= 0) {
+                timerText.textContent = "Konkurs się zaczął. Odśwież stronę.";
+                clearInterval(interval);
+            }
+        } else if (now < endsAt) {
+            // During contest
+            timerContainer.style.display = 'block';
+            progressContainer.style.display = 'block';
+            const diff = endsAt - now;
+            timerText.textContent = formatDiff(diff) + " do końca konkursu";
+            
+            const total = endsAt - startsAt;
+            const elapsed = now - startsAt;
+            const percentage = (elapsed / total) * 100;
+            progressBar.style.width = percentage + '%';
+            
+            // Pastel Color: Green (120) to Red (0)
+            // Saturation at 40%, Lightness at 85% for a soft pastel look
+            const hue = 120 * (1 - (percentage / 100));
+            progressBar.style.backgroundColor = `hsl(${hue}, 85%, 85%)`;
+
+            if (diff <= 0) {
+                timerText.textContent = "Konkurs się zakończył. Odśwież stronę.";
+                progressBar.style.width = '100%';
+                progressBar.style.backgroundColor = `hsl(0, 85%, 85%)`;
+                clearInterval(interval);
+            }
+        } else {
+            // After contest
+            const justFinished = (now - endsAt) < 5000;
+            if (justFinished) {
+                timerContainer.style.display = 'block';
+                timerText.textContent = "Konkurs się zakończył";
+                progressContainer.style.display = 'none';
+            } else {
+                timerContainer.style.display = 'none';
+            }
+            clearInterval(interval);
+        }
+    }
+
+    function formatDiff(ms) {
+        const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+
+        let res = "";
+        if (days > 0) res += days + " dni ";
+        if (hours > 0 || days > 0) res += hours + " godzin ";
+        if (minutes > 0 || hours > 0 || days > 0) res += minutes + " minut ";
+        res += seconds + " sekund";
+        return res;
+    }
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+})();
+</script>
+{% endif %}

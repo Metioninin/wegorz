@@ -1,93 +1,32 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zmiana hasła - {{ website }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <script>
-    function validatePassword(event) {
-        event.preventDefault();
+{% extends "base.html" %}
 
-        const currPass = document.querySelector('input[name="current_password"]').value;
-        const newPass = document.querySelector('input[name="new_password"]').value;
-        const confirmPass = document.querySelector('input[name="confirm_password"]').value;
-        const errorMsg = document.getElementById('error-msg');
-        errorMsg.style.display = 'none';
-        errorMsg.textContent = '';
+{% block title %}Zmień hasło - {{ website }}{% endblock %}
 
-        // Length check
-        const pairs = [['Aktualne hasło', currPass], ['Nowe hasło', newPass]];
-        for (const [passname, value] of pairs) {
-            if (value.length < 8 || value.length > 72) {
-                errorMsg.textContent = `${passname} musi mieć od 8 do 72 znaków.`;
-                errorMsg.style.display = 'block';
-                return false;
-            }
-        }
+{% block content %}
+    <h1>Zmień hasło</h1>
 
-        if (currPass === newPass) {
-            errorMsg.textContent = 'Nowe hasło musi różnić się od aktualnego.';
-            errorMsg.style.display = 'block';
-            return false;
-        }
-
-        if (newPass !== confirmPass) {
-            errorMsg.textContent = 'Nowe hasło i potwierdzenie hasła muszą być takie same.';
-            errorMsg.style.display = 'block';
-            return false;
-        }
-
-        event.target.submit();
-    }
-    </script>
-</head>
-<body>
-    <header>
-        <nav>
-            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">{{ website }}</a>
-            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <a href="/submit">Zgłoś rozwiązanie</a>
-                <a href="/change-password">Zmień hasło</a>
-                <form action="/logout" method="POST" style="display:inline; margin: 0;">
-                    <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Wyloguj</button>
-                </form>
+    <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <form method="POST" action="/change-password">
+            <div class="form-group">
+                <label for="current_password">Obecne hasło</label>
+                <input type="password" id="current_password" name="current_password" required>
             </div>
-        </nav>
-    </header>
+            <div class="form-group">
+                <label for="new_password">Nowe hasło</label>
+                <input type="password" id="new_password" name="new_password" required minlength="8">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Potwierdź nowe hasło</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
+            </div>
+            <button type="submit" style="width: 100%; margin-top: 1rem;">Zmień hasło</button>
+        </form>
 
-    <div class="container">
-        <h1>Zmiana hasła</h1>
-
-        <div class="card" style="max-width: 500px; margin: 0 auto;">
-            <p id="error-msg" class="error mb-4" style="display:none"></p>
-
-            {% if error %}
-            <p class="error mb-4">{{ error }}</p>
-            {% endif %}
-            {% if success %}
-            <p class="success mb-4">{{ success }}</p>
-            {% endif %}
-
-            <form action="/change-password" method="post" onsubmit="validatePassword(event)">
-                <div class="form-group">
-                    <label for="current_password">Aktualne hasło</label>
-                    <input type="password" id="current_password" name="current_password" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="new_password">Nowe hasło</label>
-                    <input type="password" id="new_password" name="new_password" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirm_password">Potwierdź nowe hasło</label>
-                    <input type="password" id="confirm_password" name="confirm_password" required>
-                </div>
-
-                <button type="submit" style="margin-top: 1rem;">Zmień hasło</button>
-            </form>
-        </div>
+        {% if error %}
+            <p class="error mt-4">{{ error }}</p>
+        {% endif %}
+        {% if success %}
+            <p class="success mt-4">{{ success }}</p>
+        {% endif %}
     </div>
-</body>
-</html>
+{% endblock %}

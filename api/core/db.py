@@ -5,7 +5,7 @@ from typing import AsyncGenerator, Optional
 from psycopg import AsyncConnection, sql
 from psycopg.rows import dict_row
 
-from api.core.models import Submission, SubmissionDetail
+from api.core.models import Settings, Submission, SubmissionDetail
 
 ENVS = {
     "host": os.getenv("POSTGRES_HOST"),
@@ -159,3 +159,16 @@ async def has_subms_left(conn: AsyncConnection, user_id: int) -> bool:
         assert res is not None
 
     return res[0]
+
+
+async def get_settings(conn: AsyncConnection) -> Settings:
+    async with conn.cursor(row_factory=dict_row) as cur:
+        await cur.execute(
+            """
+            SELECT starts_at, ends_at, subms_limit 
+            FROM settings
+            """
+        )
+        res = await cur.fetchone()
+        assert res is not None
+    return Settings(**res)

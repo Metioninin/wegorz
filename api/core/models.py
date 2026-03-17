@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal, Self
 from pydantic import AwareDatetime, BaseModel, Field, model_validator
 
@@ -42,3 +43,9 @@ class SubmissionDetail(Submission):
 class Submit(BaseModel):
     code: str
     lang: Literal["PY", "CPP"]
+
+
+class Settings(BaseModel):
+    starts_at: datetime
+    ends_at: datetime
+    subms_limit: int

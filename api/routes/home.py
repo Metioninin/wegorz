@@ -3,16 +3,23 @@ from fastapi.responses import RedirectResponse
 from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
-from api.core.db import create_session, delete_session, get_conn, get_subms, is_password_valid
-from api.core.jinja import templates
+from api.core.db import (
+    create_session,
+    delete_session,
+    get_conn,
+    get_subms,
+    is_password_valid,
+)
+from api.core.jinja import get_contest_settings, templates
 from api.core.models import ChangePassword, Login, Submission, User
 from api.core.utils import gen_logout_redirect
 
 router = APIRouter()
 
 
-def gen_homepage_template(
+async def gen_homepage_template(
     request: Request,
+    conn: AsyncConnection,
     logged_in: bool,
     status_code: int = 200,
     login_error: str | None = None,
@@ -21,15 +28,40 @@ def gen_homepage_template(
     if submissions is None:
         submissions = []
 
+    context = {
+        "logged_in": logged_in,
+        "login_error": login_error,
+        "submissions": submissions,
+    }
+    if logged_in:
+        context |= await get_contest_settings(conn)
+
+    return templates.TemplateResponse(
+        request=request, status_code=status_code, name="home.html", context=context
+    )
+
+
+async def gen_change_pass_template(
+    request: Request,
+    conn: AsyncConnection,
+    status_code: int = 200,
+    error: str | None = None,
+    success: str | None = None,
+) -> Response:
+    context = {}
+
+    if error:
+        context["error"] = error
+    if success:
+        context["success"] = success
+
+    context |= await get_contest_settings(conn)
+
     return templates.TemplateResponse(
         request=request,
+        name="change_pass.html",
+        context=context,
         status_code=status_code,
-        name="home.html",
-        context={
-            "logged_in": logged_in,
-            "login_error": login_error,
-            "submissions": submissions,
-        },
     )
 
 
@@ -44,12 +76,12 @@ async def homepage(
     else:
         subms = None
 
-    resp = gen_homepage_template(
-        request, logged_in=user_info is not None, submissions=subms
+    resp = await gen_homepage_template(
+        request, conn, logged_in=user_info is not None, submissions=subms
     )
     if user_info is None:
         resp.delete_cookie("session")
-    
+
     return resp
 
 
@@ -58,8 +90,9 @@ async def post_login(
     request: Request, data: Login = Form(), conn: AsyncConnection = Depends(get_conn)
 ) -> Response:
     if not await is_password_valid(conn, data.login, data.password):
-        return gen_homepage_template(
+        return await gen_homepage_template(
             request,
+            conn,
             logged_in=False,
             status_code=401,
             login_error="Niepoprawny login lub hasło.",
@@ -69,8 +102,9 @@ async def post_login(
     await conn.commit()
 
     if session is None:
-        return gen_homepage_template(
+        return await gen_homepage_template(
             request,
+            conn,
             logged_in=False,
             status_code=500,
             login_error="Bład serwera. Spróbuj ponownie.",
@@ -92,34 +126,15 @@ async def post_logout(
     return gen_logout_redirect()
 
 
-def gen_change_pass_template(
-    request: Request,
-    status_code: int = 200,
-    error: str | None = None,
-    success: str | None = None,
-) -> Response:
-    context = {}
-
-    if error:
-        context["error"] = error
-    if success:
-        context["success"] = success
-
-    return templates.TemplateResponse(
-        request=request,
-        name="change_pass.html",
-        context=context,
-        status_code=status_code,
-    )
-
-
 @router.get("/change-password")
 async def get_change_password(
-    request: Request, user_info: User | None = Depends(get_user_info)
+    request: Request,
+    user_info: User | None = Depends(get_user_info),
+    conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
         return gen_logout_redirect()
-    return gen_change_pass_template(request)
+    return await gen_change_pass_template(request, conn)
 
 
 @router.post("/change-password")
@@ -133,8 +148,8 @@ async def post_change_password(
         return gen_logout_redirect()
 
     if not await is_password_valid(conn, user_info.login, data.current_password):
-        return gen_change_pass_template(
-            request, status_code=401, error="Niepoprawne hasło."
+        return await gen_change_pass_template(
+            request, conn, status_code=401, error="Niepoprawne hasło."
         )
 
     await conn.execute(
@@ -158,11 +173,13 @@ async def post_change_password(
 
     if session is None:
         await conn.rollback()
-        return gen_change_pass_template(
-            request, error="Bład serwera. Spróbuj ponownie."
+        return await gen_change_pass_template(
+            request, conn, error="Bład serwera. Spróbuj ponownie."
         )
     await conn.commit()
 
-    response = gen_change_pass_template(request, success="Hasło zostało zmienione.")
+    response = await gen_change_pass_template(
+        request, conn, success="Hasło zostało zmienione."
+    )
     response.set_cookie("session", session, secure=True, httponly=True)
     return response

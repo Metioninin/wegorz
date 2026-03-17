@@ -1,101 +1,77 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ website }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block content %}
     {% if logged_in %}
-    <header>
-        <nav>
-            <a href="/" style="font-size: 1.25rem; font-weight: 700; color: var(--primary-color);">{{ website }}</a>
-            <div style="display: flex; gap: 1.5rem; align-items: center;">
-                <a href="/submit">Zgłoś rozwiązanie</a>
-                <a href="/change-password">Zmień hasło</a>
-                <form action="/logout" method="POST" style="display:inline; margin: 0;">
-                    <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Wyloguj</button>
+        <div class="card" style="margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 0.5rem;">Zadanie</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Zapoznaj się z treścią zadania.</p>
+            <a href="/static/tresc.pdf" target="_blank" style="text-decoration: none;">
+                <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    Otwórz Instrukcję (PDF)
+                </button>
+            </a>
+        </div>
+
+        <h1>Twoje zgłoszenia</h1>
+        
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Data wysłania</th>
+                            <th>Język</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in submissions %}
+                        <tr>
+                            <td><a href="/submission/{{ s.id }}">#{{ s.id }}</a></td>
+                            <td>{{ s.send_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                            <td>
+                                {% if s.lang == 'CPP' %}C++
+                                {% elif s.lang == 'PY' %}Python
+                                {% else %}{{ s.lang }}{% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ s.status|lower|replace(' ', '-') }}">{{ s.status }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not submissions %}
+                        <tr>
+                            <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 2rem;">Brak zgłoszeń</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
+            <div class="card" style="width: 100%; max-width: 400px;">
+                <h1 class="text-center" style="color: var(--primary-color);">{{ website }}</h1>
+                <h2 class="text-center">Logowanie</h2>
+                
+                {% if login_error %}
+                    <p class="error mb-4">{{ login_error }}</p>
+                {% endif %}
+
+                <form method="post" action="/login">
+                    <div class="form-group">
+                        <label for="login">Login</label>
+                        <input type="text" id="login" name="login" placeholder="Twój login" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Hasło</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
                 </form>
             </div>
-        </nav>
-    </header>
+        </div>
     {% endif %}
-
-    <div class="container">
-        {% if logged_in %}
-            <div class="card" style="margin-bottom: 2rem;">
-                <h2 style="margin-bottom: 0.5rem;">Zadanie</h2>
-                <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Zapoznaj się z treścią zadania.</p>
-                <a href="/static/tresc.pdf" target="_blank" style="text-decoration: none;">
-                    <button type="button" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                        Otwórz Instrukcję (PDF)
-                    </button>
-                </a>
-            </div>
-
-            <h1>Twoje zgłoszenia</h1>
-            
-            <div class="card">
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Data wysłania</th>
-                                <th>Język</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for s in submissions %}
-                            <tr>
-                                <td><a href="/submission/{{ s.id }}">#{{ s.id }}</a></td>
-                                <td>{{ s.send_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
-                                <td>
-                                    {% if s.lang == 'CPP' %}C++
-                                    {% elif s.lang == 'PY' %}Python
-                                    {% else %}{{ s.lang }}{% endif %}
-                                </td>
-                                <td>
-                                    <span class="status-badge status-{{ s.status|lower|replace(' ', '-') }}">{{ s.status }}</span>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not submissions %}
-                            <tr>
-                                <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 2rem;">Brak zgłoszeń</td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% else %}
-            <div style="display: flex; justify-content: center; align-items: center; min-height: 80vh;">
-                <div class="card" style="width: 100%; max-width: 400px;">
-                    <h1 class="text-center" style="color: var(--primary-color);">{{ website }}</h1>
-                    <h2 class="text-center">Logowanie</h2>
-                    
-                    {% if login_error %}
-                        <p class="error mb-4">{{ login_error }}</p>
-                    {% endif %}
-
-                    <form method="post" action="/login">
-                        <div class="form-group">
-                            <label for="login">Login</label>
-                            <input type="text" id="login" name="login" placeholder="Twój login" required autofocus>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Hasło</label>
-                            <input type="password" id="password" name="password" placeholder="••••••••" required>
-                        </div>
-                        <button type="submit" style="width: 100%; margin-top: 1rem;">Zaloguj się</button>
-                    </form>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</body>
-</html>
+{% endblock %}

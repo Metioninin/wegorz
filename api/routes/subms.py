@@ -4,11 +4,33 @@ from psycopg import AsyncConnection
 
 from api.core.auth import get_user_info
 from api.core.db import has_subms_left, is_submit_time, get_conn, get_subm, send_submit
-from api.core.models import Submit, User
-from api.core.jinja import templates
+from api.core.models import SubmissionDetail, Submit, User
+from api.core.jinja import get_contest_settings, templates
 from api.core.utils import gen_logout_redirect
 
 router = APIRouter()
+
+
+async def gen_submission_template(
+    request: Request, conn: AsyncConnection, submission: SubmissionDetail
+) -> Response:
+    context = {"submission": submission}
+    context |= await get_contest_settings(conn)
+
+    return templates.TemplateResponse(
+        request=request, name="subm.html", context=context
+    )
+
+
+async def gen_submit_template(
+    request: Request, conn: AsyncConnection, error: str | None = None
+) -> Response:
+    context = {"error": error} if error else {}
+    context |= await get_contest_settings(conn)
+
+    return templates.TemplateResponse(
+        request=request, name="send.html", context=context
+    )
 
 
 @router.get("/submission/{subm_id}")
@@ -21,23 +43,23 @@ async def get_submission_details(
     if user_info is None:
         raise HTTPException(404)
 
-    subm = await get_subm(conn, subm_id, user_info.id)
+    submission = await get_subm(conn, subm_id, user_info.id)
 
-    if subm is None:
+    if submission is None:
         raise HTTPException(404)
 
-    return templates.TemplateResponse(
-        request=request, name="subm.html", context={"submission": subm}
-    )
+    return await gen_submission_template(request, conn, submission)
 
 
 @router.get("/submit")
 async def get_submit(
-    request: Request, user_info: User | None = Depends(get_user_info)
+    request: Request,
+    user_info: User | None = Depends(get_user_info),
+    conn: AsyncConnection = Depends(get_conn),
 ) -> Response:
     if user_info is None:
         return gen_logout_redirect()
-    return templates.TemplateResponse(request=request, name="send.html")
+    return await gen_submit_template(request, conn)
 
 
 @router.post("/submit")
@@ -51,37 +73,29 @@ async def post_submit(
         return gen_logout_redirect()
 
     if not await is_submit_time(conn, user_info.id):
-        return templates.TemplateResponse(
-            request=request,
-            name="send.html",
-            context={"error": "Czas na wysyłanie zgłoszeń się nie zaczął lub minął."},
+        return await gen_submit_template(
+            request, conn, error="Czas na wysyłanie zgłoszeń się nie zaczął lub minął."
         )
 
     # prevent two submits from being in the same time
     await conn.execute("SELECT pg_advisory_xact_lock(%s)", (user_info.id,))
 
     if not await has_subms_left(conn, user_info.id):
-        return templates.TemplateResponse(
-            request=request,
-            name="send.html",
-            context={"error": "Osiągnięto maksymalny limit zgłoszeń"},
+        return await gen_submit_template(
+            request, conn, error="Osiągnięto maksymalny limit zgłoszeń"
         )
 
     code_size = len(data.code.encode("utf-8"))
     if code_size == 0 or code_size >= 100 * 1024:
-        return templates.TemplateResponse(
-            request=request,
-            name="send.html",
-            context={
-                "error": "Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB."
-            },
+        return await gen_submit_template(
+            request,
+            conn,
+            error="Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB.",
         )
 
     if "\x00" in data.code:
-        return templates.TemplateResponse(
-            request=request,
-            name="send.html",
-            context={"error": "Kod nie może zawierać bajtów zerowych (null bytes)."},
+        return await gen_submit_template(
+            request, conn, error="Kod nie może zawierać bajtów zerowych (null bytes)."
         )
 
     subm_id = await send_submit(conn, data.code, data.lang, user_info.id)
