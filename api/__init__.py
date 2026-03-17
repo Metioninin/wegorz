@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from api.routes import home, login, subms
+from api.routes import home, subms
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-for module in (home, login, subms):
+for module in (home, subms):
     app.include_router(module.router)
