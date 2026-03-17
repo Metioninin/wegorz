@@ -14,6 +14,9 @@
     const timerText = document.getElementById('timer-text');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
+    
+    // Check if the page was loaded before the contest started
+    const loadedBeforeStart = new Date().getTime() < startsAt;
 
     function updateTimer() {
         const now = new Date().getTime();
@@ -24,13 +27,14 @@
             const diff = startsAt - now;
             timerText.textContent = formatDiff(diff) + " do rozpoczęcia";
             progressContainer.style.display = 'none';
-            
-            if (diff <= 0) {
-                timerText.textContent = "Konkurs się zaczął. Odśwież stronę.";
-                clearInterval(interval);
-            }
+        } else if (loadedBeforeStart && now < endsAt) {
+            // Contest started while the user was already on the page
+            timerContainer.style.display = 'block';
+            timerText.textContent = "Konkurs się zaczął. Odśwież stronę!";
+            progressContainer.style.display = 'none';
+            clearInterval(interval);
         } else if (now < endsAt) {
-            // During contest
+            // During contest (page loaded after start)
             timerContainer.style.display = 'block';
             progressContainer.style.display = 'block';
             const diff = endsAt - now;
@@ -44,12 +48,12 @@
             // Pastel Color: Green (120) to Red (0)
             // Saturation at 40%, Lightness at 85% for a soft pastel look
             const hue = 120 * (1 - (percentage / 100));
-            progressBar.style.backgroundColor = `hsl(${hue}, 85%, 85%)`;
+            progressBar.style.backgroundColor = `hsl(${hue}, 95%, 85%)`;
 
             if (diff <= 0) {
                 timerText.textContent = "Konkurs się zakończył. Odśwież stronę.";
                 progressBar.style.width = '100%';
-                progressBar.style.backgroundColor = `hsl(0, 85%, 85%)`;
+                progressBar.style.backgroundColor = `hsl(0, 95%, 85%)`;
                 clearInterval(interval);
             }
         } else {
