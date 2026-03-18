@@ -3,21 +3,27 @@ from typing import Any
 from enum import Enum, auto
 from random import choice
 
+class Pair:
+    def __init__(self, x, y):
+        self.x = x
+        self.x = y
+
+    def __add__(self, other):
+        return Pair(self.x + other.x, self.y + other.y)
 
 class Move(Enum):
-    LEFT = auto()
-    RIGHT = auto()
-    UP = auto()
-    DOWN = auto()
-    NO_MOVE = auto()
+    LEFT = auto(Pair(-1, 0))
+    RIGHT = auto(Pair(1, 0))
+    UP = auto(Pair(0, 1))
+    DOWN = auto(Pair(0, -1))
+    NO_MOVE = auto(Pair(0, 0))
+
 
 
 @dataclass
 class Code:
     username: str
-    top_x: int
-    top_y: int
-    bot_x: int
-    bot_y: int
+    top: Pair
+    bot: Pair
     def get_move(self, context: Any) -> Move | None:
         return choice(tuple(Move))
