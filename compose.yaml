@@ -30,6 +30,22 @@ services:
     depends_on:
       - db
 
+  mgr:
+    build:
+      context: ${PWD}/mgr/
+      dockerfile: Containerfile
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+      - POSTGRES_HOST=d
+    volumes:
+      - ${PWD}/mgr/:/mgr
+    networks:
+      - db-net
+    depends_on:
+      - db
+
 networks:
   db-net:
     driver: bridge

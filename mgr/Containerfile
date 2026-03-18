@@ -1,0 +1,6 @@
+FROM python:3.14
+
+ADD https://github.com/sio2project/sio2jail/releases/download/v1.5.3/sio2jail /usr/local/bin/sio2jail
+RUN chmod +x /usr/local/bin/sio2jail
+
+CMD ["python", "mgr/main.py"]
