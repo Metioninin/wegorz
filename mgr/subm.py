@@ -3,10 +3,10 @@ from typing import Any
 from enum import Enum, auto
 from random import choice
 
+@dataclass
 class Pair:
-    def __init__(self, x, y):
-        self.x = x
-        self.x = y
+    x: int = 0
+    y: int = 0
 
     def __add__(self, other):
         return Pair(self.x + other.x, self.y + other.y)
@@ -23,7 +23,7 @@ class Move(Enum):
 @dataclass
 class Code:
     username: str
-    top: Pair
-    bot: Pair
+    top: Pair | None = None
+    bot: Pair | None = None
     def get_move(self, context: Any) -> Move | None:
         return choice(tuple(Move))
