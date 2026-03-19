@@ -46,7 +46,7 @@ class PlayerInfo:
 def intersect(topa: Pair, bota: Pair, topb: Pair, botb: Pair) -> bool:
     return not (bota.x <= topb.x or topa.x >= botb.x or 
                 bota.y >= topb.y or topa.y <= botb.y)
-
+pointsMult = 5
 st_a = 2
 st_b = 3
 density = 0.1 #between  (0, 1>
@@ -62,6 +62,11 @@ def dfs(players: list[Code], me: int):
         dfs(players, i)
 
 def calc_ranking(curr_ranking: list[(str, float)], results: list[str]):
+    for i in range(len(results)):
+        for j in range(len(curr_ranking)):
+            if(curr_ranking[j][0] == results[i]):
+                curr_ranking[j][1] += (len(results) - i) * pointsMult
+                break
     return curr_ranking
 
 def simulate(players: list[Code], ranking: list[(str, float)]):
@@ -197,5 +202,4 @@ def simulate(players: list[Code], ranking: list[(str, float)]):
     newRanking = calc_ranking(ranking, playerNamesNotation)
     for i in range(len(newRanking)):
         rankingNotation.append(newRanking[i])
-    
     return (generate_notation(k, playerNamesNotation, framesTopNotation, framesBottomNotation, zoneNotation, newRanking), newRanking)
