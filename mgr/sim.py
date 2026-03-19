@@ -64,7 +64,7 @@ def dfs(players: list[Code], me: int):
 def calc_ranking(curr_ranking: list[(str, float)], results: list[str]):
     return curr_ranking
 
-def simulate(players: list[Code], ranking: list[(str, float)]) -> str:
+def simulate(players: list[Code], ranking: list[(str, float)]):
     #notation variables
     playerNamesNotation = [] # w kolejnosci rankingu
     framesTopNotation = []
@@ -198,4 +198,4 @@ def simulate(players: list[Code], ranking: list[(str, float)]) -> str:
     for i in range(len(newRanking)):
         rankingNotation.append(newRanking[i])
     
-    return generate_notation(k, playerNamesNotation, framesTopNotation, framesBottomNotation, zoneNotation, newRanking)
+    return (generate_notation(k, playerNamesNotation, framesTopNotation, framesBottomNotation, zoneNotation, newRanking), newRanking)
