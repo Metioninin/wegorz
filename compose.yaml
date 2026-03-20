@@ -34,6 +34,7 @@ services:
     build:
       context: ${PWD}/mgr/
       dockerfile: Containerfile
+    privileged: true
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
