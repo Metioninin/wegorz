@@ -8,12 +8,20 @@ import json
 def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
     notation_data = {
         "k": k,
-        "playerNames": playerNames,
+        "playerNames": [],
         "framesTop": [],
         "framesBottom": [],
         "zone": zone,
         "ranking": []
     }
+
+    for name, score in playerNames:
+        notation_data["playerNames"].append({
+            "order": {
+                "name": name,
+                "points": float(score)
+            }
+        })
 
     for frame in framesTop:
         moves = [{"x": float(p.x), "y": float(p.y)} for p in frame]
@@ -27,7 +35,7 @@ def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
         notation_data["ranking"].append({
             "order": {
                 "name": name,
-                "score": float(score)
+                "points": float(score)
             }
         })
 
@@ -35,6 +43,7 @@ def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
 
     with open("notka.json", 'w', encoding='utf-8') as f:
         json.dump(notation_data, f, indent=4, ensure_ascii=False)
+    return {}
 @dataclass
 class PlayerInfo:
     n: int
@@ -61,11 +70,14 @@ def dfs(players: list[Code], me: int):
             continue
         dfs(players, i)
 
-def calc_ranking(curr_ranking: list[(str, float)], results: list[str]):
+def calc_ranking(curr_ranking: list[(str, float)], results: list[str], overwrite: list[(str, float)]):
     for i in range(len(results)):
         for j in range(len(curr_ranking)):
             if(curr_ranking[j][0] == results[i]):
-                curr_ranking[j][1] += (len(results) - i) * pointsMult
+                name, score = curr_ranking[j]
+                points = (len(results) - i) * pointsMult
+                overwrite.append((results[i], points))
+                curr_ranking[j] = (name, score + points)
                 break
     return curr_ranking
 
@@ -199,7 +211,8 @@ def simulate(players: list[Code], ranking: list[(str, float)]):
 
     playerNamesNotation.append(players[0].username)
     playerNamesNotation.reverse()
-    newRanking = calc_ranking(ranking, playerNamesNotation)
+    playerNamesNotationReal = []
+    newRanking = calc_ranking(ranking, playerNamesNotation, playerNamesNotationReal)
     for i in range(len(newRanking)):
         rankingNotation.append(newRanking[i])
-    return (generate_notation(k, playerNamesNotation, framesTopNotation, framesBottomNotation, zoneNotation, newRanking), newRanking)
+    return (generate_notation(k, playerNamesNotationReal, framesTopNotation, framesBottomNotation, zoneNotation, newRanking), newRanking)

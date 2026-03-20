@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class Label : MonoBehaviour
 {
     public TextMeshProUGUI text;
+    public TextMeshProUGUI points;
     public Image badge;
     public Sprite[] badgeSprites;
 }

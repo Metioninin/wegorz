@@ -17,9 +17,10 @@ public class Ranking : MonoBehaviour
     public float waitTime = 0.5f;
     public float masksDistance;
     public int startIndex = 0;
+    public TextMeshProUGUI waiting, desired;
 
     List<GameObject> ranking = new List<GameObject>();
-    public void SetRanking(List<string> names)
+    public void SetRanking(List<Order> names)
     {
         foreach(var item in ranking) 
             Destroy(item); 
@@ -30,7 +31,8 @@ public class Ranking : MonoBehaviour
         {
             var item = names[i];
             GameObject a = Instantiate(label);
-            a.GetComponent<Label>().text.text = (i + 1).ToString() + ". " + item;
+            a.GetComponent<Label>().text.text = (i + 1).ToString() + ". " + item.name;
+            a.GetComponent<Label>().points.text = item.points.ToString();
             if ((float)i / names.Count > finalistsPercent) a.GetComponent<Label>().badge.gameObject.SetActive(false);
             //else a.GetComponent<Label>().badge.sprite = a.GetComponent<Label>().badgeSprites[i];
             a.transform.SetParent(mover);
@@ -71,5 +73,11 @@ public class Ranking : MonoBehaviour
             down = false;
             wait = true;
         }
+    }
+
+    public void SetWaitingList(Lobby lobby)
+    {
+        waiting.text = "Oczekuje: " + lobby.currentPlayers.ToString();
+        desired.text = "Potrzeba: " + lobby.desiredPlayers.ToString();
     }
 }

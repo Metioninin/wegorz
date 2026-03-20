@@ -59,23 +59,49 @@ public class Anim
     }   
 }
 
+[Serializable]public class Order
+{
+    public string name;
+    public float points;
+    public Order()
+    {}
+    public Order(string name, float points)
+    {
+        this.name = name;
+        this.points = points;
+    }
+}
+
 //przy zmianie stosunku bokow nalezy zmienic rozdzielczosc gry i dostosowac zmienna k_unity i zmienic n i m
 [Serializable] public class Notation
 {
     public int k; // k = n / sta, k = m / stb
-    public List<string> playerNames; //w kolejnosci rankingu
+    public List<Order> playerNames; //w kolejnosci rankingu
     public List<Moves> framesTop;
     public List<Moves> framesBottom;
     public List<int> zone;
-    public List<string> ranking;
+    public List<Order> ranking;
     public Notation(){}
 
-    public static Notation Read(FileInfo file)
+    /*public static Notation Read(FileInfo file)
     {
         string path = file.FullName;
         return JsonUtility.FromJson<Notation>(File.ReadAllText(path));
+    }*/
+}
+
+[Serializable] public class Lobby
+{
+    public int currentPlayers;
+    public int desiredPlayers;
+    public Lobby() { }
+    public Lobby(int currentPlayers, int desiredPlayers)
+    {
+        this.currentPlayers = currentPlayers;
+        this.desiredPlayers = desiredPlayers;
     }
 }
+
 public class Interpreter : MonoBehaviour
 {
     public GameObject playerObject;
@@ -96,6 +122,7 @@ public class Interpreter : MonoBehaviour
     List<Anim> animations = new List<Anim>();
     Notation data;
     [SerializeField] AudioSource src;
+    [SerializeField] NetworkManager networkManager;
 
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
 
@@ -127,10 +154,10 @@ public class Interpreter : MonoBehaviour
 
         speed = speed2 / 1000f;
         speedLabel.text = speed2.ToString();
-        StartCoroutine(SlowerUpdate());
+        //StartCoroutine(SlowerUpdate());
     }
 
-    IEnumerator SlowerUpdate()
+    /*IEnumerator SlowerUpdate()
     {
         while (true)
         {
@@ -156,7 +183,7 @@ public class Interpreter : MonoBehaviour
 
             StartGame(newData);
         }
-    }
+    }*/
 
     float kratka;
     Vector2 WorldPos(pair pos)
@@ -188,6 +215,7 @@ public class Interpreter : MonoBehaviour
 
     private void Update()
     {
+        if (!isGameStarted) return;
         if (animations.Count == 0) return;
         bool going = false;
         foreach (var anim in animations)
@@ -221,12 +249,13 @@ public class Interpreter : MonoBehaviour
 
     void NextFrame()
     {
+        bool didDie = false;
         for (int j = 0; j < playerCount; j++)
         {
             if (!players[j].activeInHierarchy) continue;
             if (data.framesTop[currentFrame].moves[j].x == -1)
             {
-                src.PlayOneShot(popSfx);
+                didDie = true;
                 players[j].SetActive(false);
             }
             else
@@ -237,11 +266,11 @@ public class Interpreter : MonoBehaviour
             }
         }
         SetZone(data.zone[currentFrame] * kratka, false);
-
+        if(didDie) src.PlayOneShot(popSfx);
         currentFrame++;
     }
 
-    void StartGame(Notation _data)
+    public void StartGame(Notation _data)
     {
         src.PlayOneShot(startGameSfx);
         data = _data;
@@ -262,7 +291,7 @@ public class Interpreter : MonoBehaviour
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
             System.Random random = new System.Random();
             Color color = new Color((float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, 1);
-            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], color);
+            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i].name, color);
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
         }
@@ -276,13 +305,15 @@ public class Interpreter : MonoBehaviour
 
         src.PlayOneShot(winSfx);
         winnerArea.SetActive(true);
-        winnerText.text = data.playerNames[0];
+        winnerText.text = data.playerNames[0].name;
         winnerArea.GetComponent<Ranking>().SetRanking(data.playerNames);
         yield return new WaitForSeconds(5 / speed2);
         winnerArea.SetActive(false);
 
+        PlayerPrefs.SetInt("currentGame", PlayerPrefs.GetInt("currentGame") + 1);
         ranking.gameObject.SetActive(true);
         ranking.SetRanking(data.ranking);
+        networkManager.ResetToggle();
         isGameStarted = false;
     }
 
@@ -321,5 +352,10 @@ public class Interpreter : MonoBehaviour
         speed2 -= .5f;
         speedLabel.text = speed2.ToString();
         speed = speed2 / 1000f;
+    }
+
+    public bool IsGamePlaying()
+    {
+        return isGameStarted;
     }
 }
