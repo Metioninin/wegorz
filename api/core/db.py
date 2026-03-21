@@ -8,6 +8,7 @@ from psycopg.rows import dict_row
 from api.core.models import Settings, Submission, SubmissionDetail
 
 ENVS = {
+    "host": os.getenv("POSTGRES_HOST"),
     "dbname": os.getenv("POSTGRES_DB"),
     "user": os.getenv("POSTGRES_USER"),
     "password": os.getenv("POSTGRES_PASSWORD"),
