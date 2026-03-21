@@ -10,4 +10,4 @@ RUN mkdir -p /opt/python-standalone && \
     tar -xzf /tmp/python.tar.gz -C /opt/python-standalone --strip-components=1 && \
     rm /tmp/python.tar.gz
 
-CMD ["python", "/mgr/main.py"]
+CMD ["python", "-m", "mgr"]
