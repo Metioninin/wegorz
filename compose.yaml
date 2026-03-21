@@ -2,10 +2,8 @@ services:
   db:
     hostname: db
     image: postgres:17.5
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
+    env_file:
+      - .env
     volumes:
       - ${PWD}/.db-data/:/var/lib/postgresql/data/
       - ${PWD}/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -16,11 +14,8 @@ services:
     build:
       context: ${PWD}/api/
       dockerfile: Containerfile
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - POSTGRES_HOST=db
+    env_file:
+      - .env
     volumes:
       - ${PWD}/api/:/api
     networks:
@@ -35,11 +30,8 @@ services:
       context: ${PWD}/mgr/
       dockerfile: Containerfile
     privileged: true
-    environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-      - POSTGRES_HOST=d
+    env_file:
+      - .env
     volumes:
       - ${PWD}/mgr/:/mgr
     networks:

@@ -9,7 +9,7 @@ bytecode_cache = FileSystemBytecodeCache("/tmp/")
 templates = Jinja2Templates(
     directory="templates", auto_reload=False, bytecode_cache=bytecode_cache
 )
-templates.env.globals.update({"website": "Węgorz"})
+templates.env.globals.update({"website": os.getenv("WEBSITE_NAME")})
 
 
 async def get_contest_settings(conn: AsyncConnection):
