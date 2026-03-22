@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS rounds(
 
 
 CREATE TYPE code_status AS ENUM (
-    'oczekiwanie na testy',
+    'oczekiwanie',
+    'kompilacja',
+    'błąd kompilacji',
     'testowanie',
     'błąd testowania',
-    'grający lub oczekujący',
+    'gotowy',
     'zarchiwizowany'
 );
 CREATE TYPE code_lang AS ENUM('PY', 'CPP');
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS submissions(
     code TEXT NOT NULL,
     lang code_lang NOT NULL,
 
-    status code_status NOT NULL DEFAULT 'oczekiwanie na testy',
+    status code_status NOT NULL DEFAULT 'oczekiwanie',
     status_msg TEXT NOT NULL DEFAULT '',
 
     user_id INT NOT NULL REFERENCES users(id),
