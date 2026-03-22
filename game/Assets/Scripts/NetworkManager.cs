@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
-[Serializable] public class Request
+/*[Serializable] public class Request
 {
     public int ith;
     public bool force;
@@ -27,11 +27,11 @@ using UnityEngine.Networking;
 [Serializable] public class LobbyResponse
 {
     public Lobby lobby;
-}
+}*/
 
 public class NetworkManager : MonoBehaviour
 {
-    string WEB_URL = "htttps://google.com";
+    /*string WEB_URL = "htttps://google.com";
     string SECRET = "uihabsdguvasd324132414";
     public float refreshRate = 5;
     bool currForce = false;
@@ -105,5 +105,5 @@ public class NetworkManager : MonoBehaviour
     public void ResetToggle()
     {
         forceToggle.isOn = currForce = false;
-    }
+    }*/
 }

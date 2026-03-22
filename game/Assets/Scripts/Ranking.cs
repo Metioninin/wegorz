@@ -75,9 +75,9 @@ public class Ranking : MonoBehaviour
         }
     }
 
-    public void SetWaitingList(Lobby lobby)
+    /*public void SetWaitingList(Lobby lobby)
     {
         waiting.text = "Oczekuje: " + lobby.currentPlayers.ToString();
         desired.text = "Potrzeba: " + lobby.desiredPlayers.ToString();
-    }
+    }*/
 }

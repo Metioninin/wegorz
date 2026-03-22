@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -83,14 +84,21 @@ public class Anim
     public List<Order> ranking;
     public Notation(){}
 
-    /*public static Notation Read(FileInfo file)
-    {
-        string path = file.FullName;
-        return JsonUtility.FromJson<Notation>(File.ReadAllText(path));
-    }*/
+
 }
 
-[Serializable] public class Lobby
+[Serializable]
+public class Tasiemiec
+{
+    public List<Notation> data;
+    public static Tasiemiec Read(FileInfo file)
+    {
+        string path = file.FullName;
+        return JsonUtility.FromJson<Tasiemiec>(File.ReadAllText(path));
+    }
+}
+
+/*[Serializable] public class Lobby
 {
     public int currentPlayers;
     public int desiredPlayers;
@@ -100,7 +108,7 @@ public class Anim
         this.currentPlayers = currentPlayers;
         this.desiredPlayers = desiredPlayers;
     }
-}
+}*/
 
 public class Interpreter : MonoBehaviour
 {
@@ -109,6 +117,7 @@ public class Interpreter : MonoBehaviour
     int playerCount, currentFrame = 1;
     public float refreshRate = 1;
     float speed = 1;
+    int currentGame = 0;
     public float speed2 = 1;
     bool isGameStarted = false;
     public int k_Unity; //dlugosc boku mapy(krotsza) / st_a
@@ -120,44 +129,20 @@ public class Interpreter : MonoBehaviour
     [SerializeField] Transform[] zoneMasks; //LRUD
     [SerializeField] TextMeshProUGUI speedLabel;
     List<Anim> animations = new List<Anim>();
+    Tasiemiec dataLong;
     Notation data;
     [SerializeField] AudioSource src;
-    [SerializeField] NetworkManager networkManager;
 
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
 
     private void Start()
     {
-        /*Notation test = new Notation();
-        int _k = 3;
-        List<string> _playerNames = new List<string> { "A", "B", "C" };
-        List<Moves> _framesTop = new List<Moves> {new Moves(new List<pair> {new pair(0, 6), new pair(4, 6), new pair(6, 1)}),
-        new Moves(new List<pair> {new pair(1, 6), new pair(3, 6), new pair(6, 2)}), 
-        new Moves(new List<pair> {new pair(2, 6), new pair(-1, -1), new pair(6, 3)}),
-        new Moves(new List<pair> {new pair(2, 5), new pair(-1, -1), new pair(5, 3)})};
-        
-        List<Moves> _framesBottom = new List<Moves> {new Moves(new List<pair> {new pair(1, 5), new pair(5, 5), new pair(7, 0)}),
-        new Moves(new List<pair> {new pair(2, 5), new pair(4, 5), new pair(7, 1)}),
-        new Moves(new List<pair> {new pair(4, 4), new pair(-1, -1), new pair(7, 2)}),
-        new Moves(new List<pair> {new pair(4, 3), new pair(-1, -1), new pair(6, 2)})};
-        List<int> _zone = new List<int> { 0, 0, 0, 1, 1, 1, 1 };
-
-        test.playerNames = _playerNames;
-        test.zone = _zone;
-        test.k = _k;
-        test.framesBottom = _framesBottom;
-        test.framesTop = _framesTop;
-
-        string json = JsonUtility.ToJson(test, true);
-        File.WriteAllText(Application.persistentDataPath + "/pliczek.json", json);
-        Debug.Log(Application.persistentDataPath);*/
-
         speed = speed2 / 1000f;
         speedLabel.text = speed2.ToString();
-        //StartCoroutine(SlowerUpdate());
+        StartCoroutine(SlowerUpdate());
     }
 
-    /*IEnumerator SlowerUpdate()
+    IEnumerator SlowerUpdate()
     {
         while (true)
         {
@@ -178,12 +163,11 @@ public class Interpreter : MonoBehaviour
                 }
             }
 
-            Notation newData = Notation.Read(file);
+            dataLong = Tasiemiec.Read(file);
             file.Delete();
-
-            StartGame(newData);
+            break;
         }
-    }*/
+    }
 
     float kratka;
     Vector2 WorldPos(pair pos)
@@ -270,10 +254,11 @@ public class Interpreter : MonoBehaviour
         currentFrame++;
     }
 
-    public void StartGame(Notation _data)
+    public void StartGame()
     {
+        if (currentGame == dataLong.data.Count) return;
         src.PlayOneShot(startGameSfx);
-        data = _data;
+        data = dataLong.data[currentGame++];
         ranking.gameObject.SetActive(false);
         isGameStarted = true;
         foreach (var player in players) { Destroy(player); }
@@ -310,10 +295,8 @@ public class Interpreter : MonoBehaviour
         yield return new WaitForSeconds(5 / speed2);
         winnerArea.SetActive(false);
 
-        PlayerPrefs.SetInt("currentGame", PlayerPrefs.GetInt("currentGame") + 1);
         ranking.gameObject.SetActive(true);
         ranking.SetRanking(data.ranking);
-        networkManager.ResetToggle();
         isGameStarted = false;
     }
 
