@@ -5,7 +5,7 @@ from psycopg import AsyncConnection
 from api.core.deps import get_user_info
 from api.core.db import (
     has_submit_access,
-    has_subms_left,
+    get_subms_cnt,
     is_submit_time,
     get_conn,
     get_subm,
@@ -16,6 +16,11 @@ from api.core.jinja import get_round_context, templates
 from api.core.utils import gen_logout_redirect
 
 router = APIRouter()
+
+
+async def get_subms_context(conn: AsyncConnection, user_id: int) -> dict:
+    subms_cnt = await get_subms_cnt(conn, user_id)
+    return {"subms_left": max(0, subms_cnt[1] - subms_cnt[0])}
 
 
 async def gen_submission_template(
@@ -30,10 +35,14 @@ async def gen_submission_template(
 
 
 async def gen_submit_template(
-    request: Request, conn: AsyncConnection, error: str | None = None
+    request: Request,
+    conn: AsyncConnection,
+    user_id: int,
+    error: str | None = None,
 ) -> Response:
     context = {"error": error} if error else {}
     context |= await get_round_context(conn)
+    context |= await get_subms_context(conn, user_id)
 
     return templates.TemplateResponse(
         request=request, name="send.html", context=context
@@ -66,7 +75,8 @@ async def get_submit(
 ) -> Response:
     if user_info is None:
         return gen_logout_redirect()
-    return await gen_submit_template(request, conn)
+
+    return await gen_submit_template(request, conn, user_info.id)
 
 
 @router.post("/submit")
@@ -81,22 +91,27 @@ async def post_submit(
 
     if not await is_submit_time(conn):
         return await gen_submit_template(
-            request, conn, error="Czas na wysyłanie zgłoszeń się nie zaczął lub minął."
+            request,
+            conn,
+            user_info.id,
+            error="Zgłoszenie można wysyłać tylko w trakcie rundy.",
         )
 
     if not await has_submit_access(conn, user_info.id):
         return await gen_submit_template(
             request,
             conn,
+            user_info.id,
             error="Nie możesz wysłać zgłoszenia, bo nie zakwalifikowałeś się do tej rundy.",
         )
 
     # prevent two submits from being in the same time
     await conn.execute("SELECT pg_advisory_xact_lock(%s)", (user_info.id,))
 
-    if not await has_subms_left(conn, user_info.id):
+    subm_cnt = await get_subms_cnt(conn, user_info.id)
+    if subm_cnt[0] >= subm_cnt[1]:
         return await gen_submit_template(
-            request, conn, error="Osiągnięto maksymalny limit zgłoszeń"
+            request, conn, user_info.id, error="Osiągnięto maksymalny limit zgłoszeń"
         )
 
     code_size = len(data.code.encode("utf-8"))
@@ -104,12 +119,16 @@ async def post_submit(
         return await gen_submit_template(
             request,
             conn,
+            user_info.id,
             error="Rozmiar kodu musi być większy niż 0 i mniejszy niż 100KB.",
         )
 
     if "\x00" in data.code:
         return await gen_submit_template(
-            request, conn, error="Kod nie może zawierać bajtów zerowych (null bytes)."
+            request,
+            conn,
+            user_info.id,
+            error="Kod nie może zawierać bajtów zerowych (null bytes).",
         )
 
     subm_id = await send_submit(conn, data.code, data.lang, user_info.id)

@@ -64,7 +64,7 @@ INSERT INTO rounds (title, description, starts_at, ends_at, subms_limit, stateme
 VALUES 
     ('Runda próbna', '', '2026-03-29T15:00:00+01:00', '2026-03-29T23:59:59+01:00', 25, 'probna.pdf', false),
     ('Runda główna', '', '2026-03-30T15:00:00+01:00', '2026-03-31T23:59:59+01:00', 25, 'glowna.pdf', false),
-    ('Finał', '', '2026-04-01T00:00:00Z', '2026-04-01T23:59:59Z', 25, 'final.pdf', true);
+    ('Runda finałowa', '', '2026-04-01T00:00:00Z', '2026-04-01T23:59:59Z', 25, 'final.pdf', true);
 
 
 -- TODO: prepare this for production
