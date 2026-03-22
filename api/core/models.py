@@ -32,6 +32,7 @@ class Submission(BaseModel):
     id: int
     lang: str
     status: str
+    round_title: str
     send_at: AwareDatetime
 
 
@@ -45,7 +46,12 @@ class Submit(BaseModel):
     lang: Literal["PY", "CPP"]
 
 
-class Settings(BaseModel):
+class Round(BaseModel):
+    title: str
+    description: str
+    
+    subms_limit: int
+    statement_name: str
+
     starts_at: datetime
     ends_at: datetime
-    subms_limit: int

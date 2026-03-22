@@ -1,4 +1,4 @@
-{% if contest_settings %}
+{% if round %}
 <div id="contest-timer" class="timer-container" style="display: none;">
     <div id="progress-container" class="progress-container" style="display: none;">
         <div id="progress-bar" class="progress-bar"></div>
@@ -8,8 +8,8 @@
 
 <script>
 (function() {
-    const startsAt = new Date("{{ contest_settings.starts_at.isoformat() }}").getTime();
-    const endsAt = new Date("{{ contest_settings.ends_at.isoformat() }}").getTime();
+    const startsAt = new Date("{{ round.starts_at.isoformat() }}").getTime();
+    const endsAt = new Date("{{ round.ends_at.isoformat() }}").getTime();
     const timerContainer = document.getElementById('contest-timer');
     const timerText = document.getElementById('timer-text');
     const progressContainer = document.getElementById('progress-container');

@@ -1,19 +1,21 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+import os
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse
 from psycopg import AsyncConnection
 
-from api.core.auth import get_user_info
 from api.core.db import (
     create_session,
     delete_session,
     get_conn,
-    get_settings,
     get_subms,
     is_password_valid,
 )
-from api.core.jinja import get_contest_settings, templates
-from api.core.models import ChangePassword, Login, Submission, User
+from api.core.deps import get_round, get_user_info
+from api.core.jinja import get_round_context, templates
+from api.core.models import ChangePassword, Login, Round, Submission, User
 from api.core.utils import gen_logout_redirect
 
 router = APIRouter()
@@ -37,7 +39,7 @@ async def gen_homepage_template(
         "now": datetime.now(UTC),
     }
     if logged_in:
-        context |= await get_contest_settings(conn)
+        context |= await get_round_context(conn)
 
     return templates.TemplateResponse(
         request=request, status_code=status_code, name="home.html", context=context
@@ -58,7 +60,7 @@ async def gen_change_pass_template(
     if success:
         context["success"] = success
 
-    context |= await get_contest_settings(conn)
+    context |= await get_round_context(conn)
 
     return templates.TemplateResponse(
         request=request,
@@ -82,6 +84,7 @@ async def homepage(
     resp = await gen_homepage_template(
         request, conn, logged_in=user_info is not None, submissions=subms
     )
+
     if user_info is None:
         resp.delete_cookie("session")
 
@@ -191,14 +194,17 @@ async def post_change_password(
 @router.get("/statement")
 async def statement(
     user_info: User | None = Depends(get_user_info),
-    conn: AsyncConnection = Depends(get_conn)
+    current_round: Round = Depends(get_round),
 ) -> Response:
     if user_info is None:
         return RedirectResponse("/", status_code=303)
 
-    settings = await get_settings(conn)
-        
-    if datetime.now().astimezone() < settings.starts_at:
+    if datetime.now().astimezone() < current_round.starts_at:
         raise HTTPException(403)
 
-    return FileResponse("static/tresc.pdf")
+    filename = Path("static") / current_round.statement_name
+
+    if not os.path.exists(filename):
+        raise HTTPException(404)
+        
+    return FileResponse(filename)

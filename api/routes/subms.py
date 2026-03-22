@@ -2,10 +2,17 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Path, Request, Resp
 from fastapi.responses import RedirectResponse
 from psycopg import AsyncConnection
 
-from api.core.auth import get_user_info
-from api.core.db import has_subms_left, is_submit_time, get_conn, get_subm, send_submit
+from api.core.deps import get_user_info
+from api.core.db import (
+    has_submit_access,
+    has_subms_left,
+    is_submit_time,
+    get_conn,
+    get_subm,
+    send_submit,
+)
 from api.core.models import SubmissionDetail, Submit, User
-from api.core.jinja import get_contest_settings, templates
+from api.core.jinja import get_round_context, templates
 from api.core.utils import gen_logout_redirect
 
 router = APIRouter()
@@ -15,7 +22,7 @@ async def gen_submission_template(
     request: Request, conn: AsyncConnection, submission: SubmissionDetail
 ) -> Response:
     context = {"submission": submission}
-    context |= await get_contest_settings(conn)
+    context |= await get_round_context(conn)
 
     return templates.TemplateResponse(
         request=request, name="subm.html", context=context
@@ -26,7 +33,7 @@ async def gen_submit_template(
     request: Request, conn: AsyncConnection, error: str | None = None
 ) -> Response:
     context = {"error": error} if error else {}
-    context |= await get_contest_settings(conn)
+    context |= await get_round_context(conn)
 
     return templates.TemplateResponse(
         request=request, name="send.html", context=context
@@ -72,9 +79,16 @@ async def post_submit(
     if user_info is None:
         return gen_logout_redirect()
 
-    if not await is_submit_time(conn, user_info.id):
+    if not await is_submit_time(conn):
         return await gen_submit_template(
             request, conn, error="Czas na wysyłanie zgłoszeń się nie zaczął lub minął."
+        )
+
+    if not await has_submit_access(conn, user_info.id):
+        return await gen_submit_template(
+            request,
+            conn,
+            error="Nie możesz wysłać zgłoszenia, bo nie zakwalifikowałeś się do tej rundy.",
         )
 
     # prevent two submits from being in the same time

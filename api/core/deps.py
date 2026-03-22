@@ -2,8 +2,8 @@ from fastapi import Cookie, Depends
 from psycopg import AsyncConnection
 from psycopg.rows import dict_row
 
-from api.core.db import get_conn
-from api.core.models import User
+from api.core.db import get_conn, get_round as db_get_round
+from api.core.models import Round, User
 
 
 async def get_user_info(
@@ -32,3 +32,7 @@ async def get_user_info(
             return None
 
     return User(**res)
+
+
+async def get_round(conn: AsyncConnection = Depends(get_conn)) -> Round:
+    return await db_get_round(conn)

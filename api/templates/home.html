@@ -4,7 +4,7 @@
     {% if logged_in %}
         <div class="card" style="margin-bottom: 2rem;">
             <h1 style="margin-bottom: 0.5rem;">Zadanie</h1>
-            {% if contest_settings and now < contest_settings.starts_at %}
+            {% if round and now < round.starts_at %}
                 <p style="color: var(--text-muted); margin-top: 1rem;">Treść zadania będzie dostępna po rozpoczęciu konkursu. Odśwież stronę o czasie.</p>
             {% else %}
                 <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Zapoznaj się z treścią zadania.</p>
@@ -18,7 +18,7 @@
         
         <div class="card">
             <div class="table-container">
-                <h1>Twoje zgłoszenia ({{submissions | length}} / {{contest_settings.subms_limit}})</h1>
+                <h1>Twoje zgłoszenia ({{submissions | length}} / {{round.subms_limit}})</h1>
 
                 <table>
                     <thead>
