@@ -13,15 +13,22 @@ def calc_ranking(ranking: list[(str, float)], gain1, gain2, players: list[Prison
             ranking[i] = nowy
     ranking.sort(key=lambda x: x[1], reverse=False)
 
-def generate_notation(name1, name2, move1, move2, gain1, gain2):
+def generate_notation(name1, name2, move1, move2, gain1, gain2, ranking):
     notation_data = {
         "name1": name1,
         "name2": name2,
         "move1": move1,
         "move2": move2,
         "gain1": gain1,
-        "gain2": gain2
+        "gain2": gain2,
+        "ranking": []
     }
+
+    for name, score in ranking:
+        notation_data["ranking"].append({
+            "name": name,
+            "points": float(score)
+        })
 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
@@ -54,4 +61,4 @@ def simulate(players: list[PrisonCode], ranking: list[(str, float)]):
         move11 = 1
     if move2 == 'Niezgoda':
         move22 = 1
-    return (generate_notation(players[0].username, players[1].username, move11, move22, gain1, gain2), ranking)
+    return (generate_notation(players[0].username, players[1].username, move11, move22, gain1, gain2, ranking), ranking)

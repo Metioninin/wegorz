@@ -10,6 +10,7 @@ public class Notation
 {
     public string name1, name2;
     public int move1, move2, gain1, gain2;
+    public List<Order> ranking;
 }
 
 public class Game : MonoBehaviour
@@ -62,6 +63,6 @@ public class Game : MonoBehaviour
         iconAnim = new List<Animator>();
         gameArea.SetActive(false);
         rankingArea.SetActive(true);
-        ranking.ShowRanking(data);
+        ranking.ShowRanking(data.ranking);
     }
 }
