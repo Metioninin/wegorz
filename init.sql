@@ -35,10 +35,12 @@ CREATE TABLE IF NOT EXISTS rounds(
 
 
 CREATE TYPE code_status AS ENUM (
-    'oczekiwanie na testy',
+    'oczekiwanie',
+    'kompilacja',
+    'błąd kompilacji',
     'testowanie',
     'błąd testowania',
-    'grający lub oczekujący',
+    'gotowy',
     'zarchiwizowany'
 );
 CREATE TYPE code_lang AS ENUM('PY', 'CPP');
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS submissions(
     code TEXT NOT NULL,
     lang code_lang NOT NULL,
 
-    status code_status NOT NULL DEFAULT 'oczekiwanie na testy',
+    status code_status NOT NULL DEFAULT 'oczekiwanie',
     status_msg TEXT NOT NULL DEFAULT '',
 
     user_id INT NOT NULL REFERENCES users(id),
@@ -64,7 +66,7 @@ INSERT INTO rounds (title, description, starts_at, ends_at, subms_limit, stateme
 VALUES 
     ('Runda próbna', '', '2026-03-29T15:00:00+01:00', '2026-03-29T23:59:59+01:00', 25, 'probna.pdf', false),
     ('Runda główna', '', '2026-03-30T15:00:00+01:00', '2026-03-31T23:59:59+01:00', 25, 'glowna.pdf', false),
-    ('Finał', '', '2026-04-01T00:00:00Z', '2026-04-01T23:59:59Z', 25, 'final.pdf', true);
+    ('Runda finałowa', '', '2026-04-01T00:00:00Z', '2026-04-01T23:59:59Z', 25, 'final.pdf', true);
 
 
 -- TODO: prepare this for production

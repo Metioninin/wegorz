@@ -19,10 +19,20 @@ CONNINFO = " ".join([f"{name}={value}" for name, value in ENVS.items()])
 
 ROUND_SELECT = sql.SQL(
     """
-    SELECT *
-    FROM rounds 
-    WHERE now() <= ends_at
-    ORDER BY id 
+    (
+        SELECT *
+        FROM rounds
+        WHERE now() <= ends_at
+        ORDER BY ends_at
+        LIMIT 1
+    )
+    UNION ALL
+    (
+        SELECT *
+        FROM rounds
+        ORDER BY ends_at DESC
+        LIMIT 1
+    )
     LIMIT 1
     """
 )
@@ -99,6 +109,7 @@ async def get_subms(conn: AsyncConnection, user_id: int) -> list[Submission]:
                 FROM submissions s
                 JOIN rounds r ON r.id = s.round_id 
                 WHERE s.user_id = %s
+                ORDER BY id DESC
                 """,
             ).format(gen_subm_select(prefix="s")),
             (user_id,),
@@ -155,13 +166,13 @@ async def is_submit_time(conn: AsyncConnection) -> bool:
     return res[0]
 
 
-async def has_subms_left(conn: AsyncConnection, user_id: int) -> bool:
+async def get_subms_cnt(conn: AsyncConnection, user_id: int) -> tuple[int, int]:
     async with conn.cursor() as cur:
         await cur.execute(
             sql.SQL(
                 """
                 WITH round AS ({})
-                SELECT COUNT(*) < (SELECT subms_limit FROM round)
+                SELECT COUNT(*), (SELECT subms_limit FROM round)
                 FROM submissions s
                 WHERE s.user_id = %s AND s.round_id = (SELECT id FROM round)
                 """
@@ -171,7 +182,7 @@ async def has_subms_left(conn: AsyncConnection, user_id: int) -> bool:
         res = await cur.fetchone()
         assert res is not None
 
-    return res[0]
+    return res[0], res[1]
 
 
 async def has_submit_access(conn: AsyncConnection, user_id: int) -> bool:

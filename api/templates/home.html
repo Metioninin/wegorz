@@ -2,10 +2,17 @@
 
 {% block content %}
     {% if logged_in %}
+        {% if round and now >= round.starts_at %}
+            <div class="card" style="margin-bottom: 2rem;">
+                <h1 style="margin-bottom: 0.5rem;">{{ round.title }}</h1>
+                <p style="color: var(--text-muted);">{{ round.description }}</p>
+            </div>
+        {% endif %}
+
         <div class="card" style="margin-bottom: 2rem;">
             <h1 style="margin-bottom: 0.5rem;">Zadanie</h1>
             {% if round and now < round.starts_at %}
-                <p style="color: var(--text-muted); margin-top: 1rem;">Treść zadania będzie dostępna po rozpoczęciu konkursu. Odśwież stronę o czasie.</p>
+                <p style="color: var(--text-muted); margin-top: 1rem;">Treść zadania będzie dostępna po rozpoczęciu rundy. Odśwież stronę o czasie.</p>
             {% else %}
                 <p style="color: var(--text-muted); margin-bottom: 1.25rem;">Zapoznaj się z treścią zadania.</p>
                 <a href="/statement" target="_blank" class="btn-link" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; background-color: var(--primary-color); color: white; padding: 0.625rem 1.25rem; border-radius: 0.5rem; font-weight: 600; transition: background-color 0.2s;">
@@ -18,13 +25,14 @@
         
         <div class="card">
             <div class="table-container">
-                <h1>Twoje zgłoszenia ({{submissions | length}} / {{round.subms_limit}})</h1>
+                <h1>Twoje zgłoszenia</h1>
 
                 <table>
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Data wysłania</th>
+                            <th>Runda</th>
                             <th>Język</th>
                             <th>Status</th>
                         </tr>
@@ -34,6 +42,7 @@
                         <tr>
                             <td><a href="/submission/{{ s.id }}">#{{ s.id }}</a></td>
                             <td>{{ s.send_at.strftime('%d.%m.%Y %H:%M:%S') }}</td>
+                            <td>{{ s.round_title }}</td>
                             <td>
                                 {% if s.lang == 'CPP' %}C++
                                 {% elif s.lang == 'PY' %}Python
@@ -46,7 +55,7 @@
                         {% endfor %}
                         {% if not submissions %}
                         <tr>
-                            <td colspan="4" class="text-center" style="color: var(--text-muted); padding: 2rem;">Brak zgłoszeń</td>
+                            <td colspan="5" class="text-center" style="color: var(--text-muted); padding: 2rem;">Brak zgłoszeń</td>
                         </tr>
                         {% endif %}
                     </tbody>

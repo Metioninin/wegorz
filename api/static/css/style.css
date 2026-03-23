@@ -221,11 +221,13 @@ tr:hover {
 }
 
 /* Specific status colors */
-.status-oczekiwanie-na-testy { background-color: #fef3c7; color: #92400e; }
+.status-oczekiwanie { background-color: #f1f5f9; color: #475569; }
+.status-kompilacja { background-color: #fef3c7; color: #92400e; }
+.status-b\000142\000105d-kompilacji { background-color: #ffedd5; color: #9a3412; }
 .status-testowanie { background-color: #e0f2fe; color: #075985; }
-.status-błąd-testowania { background-color: #fee2e2; color: #991b1b; }
-.status-grający-lub-oczekujący { background-color: #dcfce7; color: #166534; }
-.status-zarchiwizowany { background-color: #f1f5f9; color: #475569; }
+.status-b\000142\000105d-testowania { background-color: #fee2e2; color: #991b1b; }
+.status-gotowy { background-color: #dcfce7; color: #166534; }
+.status-zarchiwizowany { background-color: #e2e8f0; color: #64748b; }
 
 /* Clear button (X) */
 .btn-x {
@@ -365,5 +367,5 @@ tr:hover {
 .progress-bar {
     height: 100%;
     width: 0%;
-    transition: width 1s linear;
+    transition: width 0s linear;
 }
