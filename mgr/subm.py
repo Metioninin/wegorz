@@ -27,3 +27,9 @@ class Code:
     bot: Pair | None = None
     def get_move(self, context: Any) -> Move | None:
         return choice(tuple(Move))
+    
+@dataclass
+class PrisonCode:
+    username: str
+    def get_move(self, context: Any) -> str:
+        return "Wspolpraca"

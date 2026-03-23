@@ -79,6 +79,7 @@ def calc_ranking(curr_ranking: list[(str, float)], results: list[str], overwrite
                 overwrite.append((results[i], points))
                 curr_ranking[j] = (name, score + points)
                 break
+    curr_ranking.sort(key=lambda x: x[1], reverse=True)
     return curr_ranking
 
 def simulate(players: list[Code], ranking: list[(str, float)]):
