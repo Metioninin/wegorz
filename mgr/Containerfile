@@ -10,4 +10,6 @@ RUN mkdir -p /opt/python-standalone && \
     tar -xzf /tmp/python.tar.gz -C /opt/python-standalone --strip-components=1 && \
     rm /tmp/python.tar.gz
 
+RUN pip install pexpect --no-cache-dir --break-system-packages
+
 CMD ["python", "-m", "mgr"]
