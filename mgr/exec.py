@@ -148,8 +148,8 @@ def compile_cpp(code: str, result_path: Path, box_id: int) -> None:
 
     options = [
         f"--box-id={box_id}",
-        f"--mem={COMPILE_MEM_LIMIT}",
-        "--processes=2",
+        f"--mem={COMPILE_MEM_LIMIT}", # NOTE: vulnerability, works only for one process
+        "--processes=1024", # no limit
         f"--fsize={COMPILE_OUT_LIMIT}",
         "--dir=/usr",
     ]
