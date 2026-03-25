@@ -17,8 +17,7 @@ Status = Literal[
     "błąd kompilacji",
     "testowanie",
     "błąd testowania",
-    "gotowy",
-    "zarchiwizowany",
+    "ok",
 ]
 
 EXC_TIMEOUT=0.5

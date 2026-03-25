@@ -52,6 +52,6 @@ def work(subm: Subm, sim: Simulator):
                     logger.error(f"Testing failed for submission {subm.id}.\n{e}")
                     set_message(subm.id, "Błąd serwera :)", conn)
             else:
-                set_status(subm.id, "gotowy", conn)
+                set_status(subm.id, "ok", conn)
             finally:
                 exc.exit()

@@ -40,8 +40,7 @@ CREATE TYPE code_status AS ENUM (
     'błąd kompilacji',
     'testowanie',
     'błąd testowania',
-    'gotowy',
-    'zarchiwizowany'
+    'ok'
 );
 CREATE TYPE code_lang AS ENUM('PY', 'CPP');
 
