@@ -1,5 +1,43 @@
-from mgr.simPrison import simulate
-from mgr.subm import PrisonCode
+import logging
+import signal
+import sys
+from multiprocessing import Pool, cpu_count
+from time import sleep
 
-res = simulate(players=[PrisonCode("A"), PrisonCode("B"), PrisonCode("C")], ranking=[("B", 4.3), ("C", 2.8), ("A", 0)])
-print(res)
+from mgr.db import get_conn, get_unprocessed_subm
+from mgr.helpers import Simulator
+from mgr.work import work
+
+
+# setup signal
+def handle_sigint(signum, frame):
+    print("Exiting...")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, handle_sigint)
+signal.signal(signal.SIGTERM, handle_sigint)
+
+# setup logging
+logger = logging.getLogger("MGR")
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] [%(threadName)s] %(message)s"))
+logger.addHandler(handler)  
+        
+
+work_pool = Pool(processes=cpu_count())
+
+logger.info("Started.")
+
+while True:
+    conn = get_conn()
+    subm = get_unprocessed_subm(conn)
+
+    if subm is None:
+        conn.close()
+        sleep(2)
+        continue
+    
+    logger.info(f"Received submission {subm.id}")
+    work_pool.apply(func=work, args=(subm, Simulator(), conn))
