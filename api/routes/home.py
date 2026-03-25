@@ -9,6 +9,7 @@ from psycopg import AsyncConnection
 from api.core.db import (
     create_session,
     delete_session,
+    get_announcement,
     get_conn,
     get_subms,
     is_password_valid,
@@ -40,6 +41,8 @@ async def gen_homepage_template(
     }
     if logged_in:
         context |= await get_round_context(conn)
+
+    context |= {"announcement": await get_announcement(conn)}
 
     return templates.TemplateResponse(
         request=request, status_code=status_code, name="home.html", context=context

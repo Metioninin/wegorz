@@ -150,6 +150,14 @@ async def get_round(conn: AsyncConnection) -> Round:
     return Round(**res)
 
 
+async def get_announcement(conn: AsyncConnection) -> str:
+    async with conn.cursor() as cur:
+        await cur.execute("SELECT announcement FROM competition_info LIMIT 1")
+        res = await cur.fetchone()
+        assert res is not None
+    return res[0]
+
+
 async def is_submit_time(conn: AsyncConnection) -> bool:
     async with conn.cursor() as cur:
         await cur.execute(

@@ -60,6 +60,12 @@ CREATE TABLE IF NOT EXISTS submissions(
 CREATE INDEX idx_submissions_user ON submissions(user_id);
 
 
+CREATE TABLE IF NOT EXISTS competition_info(
+    announcement TEXT NOT NULL DEFAULT ''
+);
+INSERT INTO competition_info (announcement) VALUES ('Witaj w systemie! Powodzenia w zawodach.');
+
+
 -- TODO: adjust dates, times, pdfs
 INSERT INTO rounds (title, description, starts_at, ends_at, subms_limit, statement_name, restricted)
 VALUES 
