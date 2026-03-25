@@ -34,19 +34,19 @@ work_pool = Pool(processes=cpu_count())
 logger.info("Started.")
 
 while True:
-    conn = get_conn()
-    subm = get_unprocessed_subm(conn)
+    with get_conn() as conn:
+        subm = get_unprocessed_subm(conn)
 
-    if subm is None:
-        conn.close()
-        sleep(2)
-        continue
+        if subm is None:
+            conn.close()
+            sleep(2)
+            continue
+        else:
+            logger.info(f"Received submission {subm.id}")
 
-    logger.info(f"Received submission {subm.id}")
+            # NOTE: after the crash it is advised to 
+            #       set all subms with similiar statuses to 'oczekiwanie'
+            subm_status = "testowanie" if subm.lang == "PY" else "kompilacja"
+            set_status(subm.id, status=subm_status, conn=conn)
 
-    # NOTE: after the crash it is advised to 
-    #       set all subms with similiar statuses to 'oczekiwanie'
-    subm_status = "testowanie" if subm.lang == "PY" else "kompilacja"
-    set_status(subm.id, status=subm_status, conn=conn)
-
-    work_pool.apply(func=work, args=(subm, Simulator(), conn))
+            work_pool.apply(func=work, args=(subm, Simulator()))
