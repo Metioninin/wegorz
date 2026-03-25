@@ -29,6 +29,11 @@ class BaseExecutor:
     _stderr_length: int = 0
 
     def start_isolation(self) -> None:
+        subprocess.run(
+            args=["isolate", f"--box-id={self.box_id}", "--cleanup"],
+            timeout=self.exit_timeout,
+            check=True,
+        )
         result = subprocess.run(
             args=["isolate", f"--box-id={self.box_id}", "--init"],
             capture_output=True,
@@ -118,11 +123,17 @@ class PythonExecutor(BaseExecutor):
 
 
 COMPILE_TIMEOUT = 30
+COMPILE_ISO_TIMEOUT = 5
 COMPILE_MEM_LIMIT = 512 * 1024
 COMPILE_OUT_LIMIT = 10 * 1024
 
 
 def compile_cpp(code: str, result_path: Path, box_id: int) -> None:
+    subprocess.run(
+        args=["isolate", f"--box-id={box_id}", "--cleanup"],
+        timeout=COMPILE_ISO_TIMEOUT,
+        check=True,
+    )
     result = subprocess.run(
         args=["isolate", f"--box-id={box_id}", "--init"],
         capture_output=True,
@@ -138,7 +149,7 @@ def compile_cpp(code: str, result_path: Path, box_id: int) -> None:
     options = [
         f"--box-id={box_id}",
         f"--mem={COMPILE_MEM_LIMIT}",
-        "--processes=12",
+        "--processes=2",
         f"--fsize={COMPILE_OUT_LIMIT}",
         "--dir=/usr",
     ]
@@ -170,4 +181,3 @@ def compile_cpp(code: str, result_path: Path, box_id: int) -> None:
         copyfile(sandbox_dir / "out", str(result_path))
     finally:
         subprocess.run(["isolate", f"--box-id={box_id}", "--cleanup"])
-
