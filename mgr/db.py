@@ -3,7 +3,6 @@ import os
 
 from psycopg import Connection
 from psycopg.rows import dict_row
-from psycopg_pool import ConnectionPool
 from retry import retry
 
 from mgr.helpers import Status, Subm
