@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-from mgr.subm import PrisonCode
+from mgr.sims.subm import PrisonCode
 import json
 
 def calc_ranking(ranking: list[(str, float)], gain1, gain2, players: list[PrisonCode]):

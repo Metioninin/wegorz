@@ -3,6 +3,7 @@ from typing import Any
 from enum import Enum, auto
 from random import choice
 
+
 @dataclass
 class Pair:
     x: int = 0
@@ -10,6 +11,7 @@ class Pair:
 
     def __add__(self, other):
         return Pair(self.x + other.x, self.y + other.y)
+
 
 class Move(Enum):
     LEFT = auto(Pair(-1, 0))
@@ -19,17 +21,19 @@ class Move(Enum):
     NO_MOVE = auto(Pair(0, 0))
 
 
-
 @dataclass
 class Code:
     username: str
     top: Pair | None = None
     bot: Pair | None = None
+
     def get_move(self, context: Any) -> Move | None:
         return choice(tuple(Move))
-    
+
+
 @dataclass
 class PrisonCode:
     username: str
+
     def get_move(self, context: Any) -> str:
         return "Wspolpraca"

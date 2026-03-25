@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-from mgr.subm import Code, Move, Pair
+from mgr.sims.subm import Code, Move, Pair
 import math
 import random
 import json
