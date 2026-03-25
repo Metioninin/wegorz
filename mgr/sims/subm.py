@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any
-from enum import Enum, auto
+from enum import Enum
 from random import choice
+from typing import Any
 
 
 @dataclass
@@ -14,11 +14,11 @@ class Pair:
 
 
 class Move(Enum):
-    LEFT = auto(Pair(-1, 0))
-    RIGHT = auto(Pair(1, 0))
-    UP = auto(Pair(0, 1))
-    DOWN = auto(Pair(0, -1))
-    NO_MOVE = auto(Pair(0, 0))
+    LEFT = Pair(-1, 0)
+    RIGHT = Pair(1, 0)
+    UP = Pair(0, 1)
+    DOWN = Pair(0, -1)
+    NO_MOVE = Pair(0, 0)
 
 
 @dataclass
