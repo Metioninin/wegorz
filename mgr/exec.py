@@ -17,7 +17,7 @@ class ExecutionError(Exception):
 class BaseExecutor:
     box_id: int
 
-    timeout: int
+    timeout: float
     mem_limit: int
     exit_timeout: int = 5
 
