@@ -18,19 +18,28 @@ public class PlayerInfo
     public string name;
     public int money;
     public int bet;
-    public string move;
     public List<CardInfo> cards;
+}
+
+[Serializable]
+public class MoveInfo
+{
+    public int index;
+    public int money;
+    public int bet;
+    public string move;
 }
 
 [Serializable]
 public class Frame
 {
-    public List<PlayerInfo> players;
+    public List<MoveInfo> moves;
     public List<CardInfo> mutualCards;
 }
 [Serializable]
 public class Notation
 {
+    public List<PlayerInfo> players;
     public List<Frame> frames;
     public List<Order> ranking;
     public int winnerIndex;
@@ -60,17 +69,17 @@ public class GameManager : MonoBehaviour
         potText.text = "0$";
         rankingArea.SetActive(false);
         gameArea.SetActive(true);
-        CreatePlayer(new Vector2(-right, 0), data.frames[0].players[0]);
-        CreatePlayer(new Vector2(right, 0), data.frames[0].players[1]);
-        for (int i = 2; i < 2 + (data.frames[0].players.Count - 1) / 2; i++)
+        CreatePlayer(new Vector2(-right, 0), data.players[0]);
+        CreatePlayer(new Vector2(right, 0), data.players[1]);
+        for (int i = 2; i < 2 + (data.players.Count - 1) / 2; i++)
         {
-            float dl = 2 * right / (1 + ((data.frames[0].players.Count - 1) / 2));
-            CreatePlayer(new Vector2((-right + dl * (i - 1)), -top / (right * right) * (-right + dl * (i - 1)) * (-right + dl * (i - 1)) + top), data.frames[0].players[i]);
+            float dl = 2 * right / (1 + ((data.players.Count - 1) / 2));
+            CreatePlayer(new Vector2((-right + dl * (i - 1)), -top / (right * right) * (-right + dl * (i - 1)) * (-right + dl * (i - 1)) + top), data.players[i]);
         }
-        for (int i = 2 + (data.frames[0].players.Count - 1) / 2; i < data.frames[0].players.Count; i++)
+        for (int i = 2 + (data.players.Count - 1) / 2; i < data.players.Count; i++)
         {
-            float dl = 2 * right / (1 + ((data.frames[0].players.Count - 2) / 2));
-            CreatePlayer(new Vector2(-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2), top / (right * right) * (-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2)) * (-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2)) - top), data.frames[0].players[i]);
+            float dl = 2 * right / (1 + ((data.players.Count - 2) / 2));
+            CreatePlayer(new Vector2(-right + dl * (i - 1 - (data.players.Count - 1) / 2), top / (right * right) * (-right + dl * (i - 1 - (data.players.Count - 1) / 2)) * (-right + dl * (i - 1 - (data.players.Count - 1) / 2)) - top), data.players[i]);
         }
 
         this.data = data;
@@ -87,21 +96,22 @@ public class GameManager : MonoBehaviour
             yield break;
         }
         Frame frame = data.frames[currFrame];
-        while (frame.mutualCards.Count != instCards.Count)
+
+        for (int i = frame.mutualCards.Count - 1; i >= instCards.Count; i--)
         {
-            CreateMutualCard(frame.mutualCards[frame.mutualCards.Count - 1]);
+            CreateMutualCard(frame.mutualCards[i]);
             yield return new WaitForSeconds(moveTime);
         }
 
-        for (int i = 0; i < frame.players.Count; i++)
+        for (int i = 0; i < frame.moves.Count; i++)
         {
-            if (frame.players[i].move == "Folded") continue;
-            instPlayers[i].GetComponent<Player>().Highlight(true, false);
-            instPlayers[i].GetComponent<Player>().UpdateInfo(frame.players[i]);
-            currentPot += frame.players[i].bet;
+            if (frame.moves[i].move == "Folded") continue;
+            instPlayers[frame.moves[i].index].GetComponent<Player>().Highlight(true, false);
+            instPlayers[frame.moves[i].index].GetComponent<Player>().UpdateInfo(frame.moves[i]);
+            currentPot += frame.moves[i].bet;
             potText.text = currentPot.ToString() + "$";
             yield return new WaitForSeconds(moveTime);
-            instPlayers[i].GetComponent<Player>().Highlight(false, false);
+            instPlayers[frame.moves[i].index].GetComponent<Player>().Highlight(false, false);
         }
 
         currFrame++;
@@ -137,7 +147,7 @@ public class GameManager : MonoBehaviour
         RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, screenPoint, null, out endPos);
         yield return new WaitForSeconds(1 / potAnimationSpeed);
         SoundManager.Instance.PlaySfx(SoundManager.Instance.win);
-        instPlayers[data.winnerIndex].GetComponent<Player>().money.text = (data.frames[data.frames.Count - 1].players[data.winnerIndex].money + currentPot).ToString() + "$";
+        instPlayers[data.winnerIndex].GetComponent<Player>().money.text = (data.players[data.winnerIndex].money + currentPot).ToString() + "$";
         potAnimation.gameObject.SetActive(false);
         yield return new WaitForSeconds(1);
 

@@ -37,3 +37,11 @@ class PrisonCode:
 
     def get_move(self, context: Any) -> str:
         return "Wspolpraca"
+
+todelete = ["Fold", "Raise 10", "Call"]
+@dataclass
+class PokerCode:
+    username: str
+
+    def get_move(self, context: Any) -> str:
+        return choice(todelete)
