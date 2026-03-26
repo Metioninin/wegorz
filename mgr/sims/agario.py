@@ -3,7 +3,7 @@ import math
 import random
 from dataclasses import dataclass
 
-from mgr.sims.subm import Code, Pair
+from mgr.sims.helpers import Code, Pair
 
 
 def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):

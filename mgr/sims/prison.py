@@ -1,6 +1,6 @@
 import json
 
-from mgr.sims.subm import PrisonCode
+from mgr.sims.helpers import PrisonCode
 
 
 def calc_ranking(
