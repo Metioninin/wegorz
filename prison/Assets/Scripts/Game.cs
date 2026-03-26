@@ -15,6 +15,8 @@ public class Notation
 
 public class Game : MonoBehaviour
 {
+    public AudioClip mixSFX, greetSFX, fightSFX;
+    public AudioSource src;
     public Vector2[] pos;
     public GameObject gameArea, rankingArea, greet, fight;
     public TextMeshProUGUI player1, player2;
@@ -46,6 +48,9 @@ public class Game : MonoBehaviour
             iconAnim[i].gameObject.SetActive(true);
         iconAnim[0].GetComponent<SpriteRenderer>().sprite = icons[data.move1];
         iconAnim[1].GetComponent<SpriteRenderer>().sprite = icons[data.move2];
+        if (data.move1 != data.move2) src.PlayOneShot(mixSFX);
+        else if (data.move1 == 0) src.PlayOneShot(greetSFX);
+        else src.PlayOneShot(fightSFX);
         for (int i = 0; i < 2; i++) iconAnim[i].SetTrigger("start");
 
         yield return new WaitForSeconds(1);

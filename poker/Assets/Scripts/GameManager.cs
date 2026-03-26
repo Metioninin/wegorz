@@ -1,0 +1,182 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEditor;
+using UnityEngine;
+
+[Serializable]
+public class CardInfo
+{
+    public int kolor; //0->kier, 1->pik, 2->karo, 3->trefl
+    public string numer;
+}
+
+[Serializable]
+public class PlayerInfo
+{
+    public string name;
+    public int money;
+    public int bet;
+    public string move;
+    public List<CardInfo> cards;
+}
+
+[Serializable]
+public class Frame
+{
+    public List<PlayerInfo> players;
+    public List<CardInfo> mutualCards;
+}
+[Serializable]
+public class Notation
+{
+    public List<Frame> frames;
+    public List<Order> ranking;
+    public int winnerIndex;
+}
+
+public class GameManager : MonoBehaviour
+{
+    public float right = 5.5f, top = 3.5f;
+    public GameObject player, card;
+    List<GameObject> instPlayers = new List<GameObject>(), instCards = new List<GameObject>();
+    public Transform cardHolder;
+    public float distanceBetweenCards = .8f;
+    Notation data;
+    public float moveTime, frameTime;
+    public Ranking ranking;
+    public GameObject rankingArea, gameArea;
+    public TextMeshProUGUI potText;
+    public Transform potAnimation;
+    public float potAnimationSpeed;
+    public RectTransform canvas;
+    int currentGame;
+    List<Notation> games;
+    public void StartGame()
+    {
+        SoundManager.Instance.PlaySfx(SoundManager.Instance.start);
+        Notation data = games[currentGame];
+        potText.text = "0$";
+        rankingArea.SetActive(false);
+        gameArea.SetActive(true);
+        CreatePlayer(new Vector2(-right, 0), data.frames[0].players[0]);
+        CreatePlayer(new Vector2(right, 0), data.frames[0].players[1]);
+        for (int i = 2; i < 2 + (data.frames[0].players.Count - 1) / 2; i++)
+        {
+            float dl = 2 * right / (1 + ((data.frames[0].players.Count - 1) / 2));
+            CreatePlayer(new Vector2((-right + dl * (i - 1)), -top / (right * right) * (-right + dl * (i - 1)) * (-right + dl * (i - 1)) + top), data.frames[0].players[i]);
+        }
+        for (int i = 2 + (data.frames[0].players.Count - 1) / 2; i < data.frames[0].players.Count; i++)
+        {
+            float dl = 2 * right / (1 + ((data.frames[0].players.Count - 2) / 2));
+            CreatePlayer(new Vector2(-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2), top / (right * right) * (-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2)) * (-right + dl * (i - 1 - (data.frames[0].players.Count - 1) / 2)) - top), data.frames[0].players[i]);
+        }
+
+        this.data = data;
+        StartCoroutine(NextFrame());
+    }
+
+    int currFrame = 1;
+    int currentPot = 0;
+    IEnumerator NextFrame()
+    {
+        if (currFrame >= data.frames.Count)
+        {
+            StartCoroutine(EndGame());
+            yield break;
+        }
+        Frame frame = data.frames[currFrame];
+        while (frame.mutualCards.Count != instCards.Count)
+        {
+            CreateMutualCard(frame.mutualCards[frame.mutualCards.Count - 1]);
+            yield return new WaitForSeconds(moveTime);
+        }
+
+        for (int i = 0; i < frame.players.Count; i++)
+        {
+            if (frame.players[i].move == "Folded") continue;
+            instPlayers[i].GetComponent<Player>().Highlight(true, false);
+            instPlayers[i].GetComponent<Player>().UpdateInfo(frame.players[i]);
+            currentPot += frame.players[i].bet;
+            potText.text = currentPot.ToString() + "$";
+            yield return new WaitForSeconds(moveTime);
+            instPlayers[i].GetComponent<Player>().Highlight(false, false);
+        }
+
+        currFrame++;
+        yield return new WaitForSeconds(frameTime);
+        StartCoroutine(NextFrame());
+    }
+
+    void CreatePlayer(Vector2 pos, PlayerInfo info)
+    {
+        instPlayers.Add(Instantiate(player, pos, Quaternion.identity));
+        instPlayers[instPlayers.Count - 1].GetComponent<Player>().SetInfo(info);
+    }
+
+    void CreateMutualCard(CardInfo info)
+    {
+        var newCard = Instantiate(card, cardHolder);
+        newCard.transform.localPosition = new Vector2(distanceBetweenCards * instCards.Count, 0);
+        newCard.GetComponent<Card>().SetColor(info);
+        instCards.Add(newCard);
+    }
+
+
+    bool animationGoing = false;
+    Vector2 startPos, endPos;
+    float progress = 0;
+    IEnumerator EndGame()
+    {
+        instPlayers[data.winnerIndex].GetComponent<Player>().Highlight(true, true);
+        animationGoing = true;
+        startPos = potAnimation.localPosition;
+        endPos = instPlayers[data.winnerIndex].transform.position;
+        Vector2 screenPoint = Camera.main.WorldToScreenPoint(instPlayers[data.winnerIndex].transform.position);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvas, screenPoint, null, out endPos);
+        yield return new WaitForSeconds(1 / potAnimationSpeed);
+        SoundManager.Instance.PlaySfx(SoundManager.Instance.win);
+        instPlayers[data.winnerIndex].GetComponent<Player>().money.text = (data.frames[data.frames.Count - 1].players[data.winnerIndex].money + currentPot).ToString() + "$";
+        potAnimation.gameObject.SetActive(false);
+        yield return new WaitForSeconds(1);
+
+        potAnimation.gameObject.SetActive(true);
+        progress = 0;
+        animationGoing = false;
+        foreach (var card in instCards)
+            Destroy(card);
+        foreach (var player in instPlayers)
+            Destroy(player);
+        currentPot = 0;
+        currFrame = 1;
+        instCards = new List<GameObject>();
+        instPlayers = new List<GameObject>();
+        currentGame++;
+
+        if (currentGame == games.Count)
+        {
+            rankingArea.SetActive(true);
+            gameArea.SetActive(false);
+            ranking.ShowRanking(data.ranking);
+        }
+        else
+        {
+            StartGame();
+        }
+    }
+
+    public void StartGames(List<Notation> gamess)
+    {
+        currentGame = 0;
+        games = gamess;
+        StartGame();
+    }
+
+    private void Update()
+    {
+        if (!animationGoing) return;
+        potAnimation.localPosition = Vector2.Lerp(startPos, endPos, progress);
+        progress += potAnimationSpeed * Time.deltaTime;
+    }
+}
