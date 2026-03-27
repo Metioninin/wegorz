@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, StrEnum
-from random import choice
+from random import choice, randint
 from typing import Any
 
 from mgr.exec import BaseExecutor, ExecutionError
@@ -90,10 +90,112 @@ class FakePrisoner(Prisoner):
         return PrisonMove.COOPERATE
 
 
-todelete = ["Fold", "Raise 10", "Call"]
+@dataclass
+class Card:
+    kolor: str
+    numer: str
+
+    def __str__(self) -> str:
+        return self.kolor + " " + self.numer
+
+
+@dataclass
+class PlayerInfo:
+    twojIndex: int
+    hajs: list[int]
+    stawki: list[int]
+    stawka: int
+    pula: int
+    ownCards: list[Card]
+    mutualCards: list[Card]
+
+    def gen_lines(self) -> list[str]:
+        return [
+            f"{self.stawka} {self.pula}",
+            " ".join(str(h) for h in self.hajs),
+            " ".join(str(s) for s in self.stawki),
+            " ".join(str(c) for c in self.ownCards),
+            " ".join(str(c) for c in self.mutualCards),
+        ]
+
+
 @dataclass
 class PokerCode:
     username: str
+    exc: BaseExecutor | None  # NOTE: must be started before
 
-    def get_move(self, context: Any) -> str:
-        return choice(todelete)
+    def send_start_info(self, players_count: int) -> None:
+        assert self.exc
+        self.exc.send_line(f"{players_count}")
+
+    def get_move(self, ctx: PlayerInfo, raise_errors: bool) -> tuple[str, int] | None:
+        if self.exc is None:
+            return None
+
+        for line in ctx.gen_lines():
+            self.exc.send_line(line)
+
+        try:
+            first_part = self.exc.read_string()
+        except ExecutionError as e:
+            if raise_errors:
+                raise TestError(str(e))
+            return None
+
+        if first_part in ("Fold", "Check", "Call"):
+            return (first_part, 0)
+        elif first_part not in ("Raise", "All"):
+            self.exc.exit()
+            self.exc = None
+
+            if raise_errors:
+                raise TestError(f"Niepoprawny ruch: {first_part}")
+            return None
+
+        try:
+            second_part = self.exc.read_string()
+        except ExecutionError as e:
+            if raise_errors:
+                raise TestError(f"Got {wrap_err(first_part)}, but after that error happend\n{e}")
+            return None
+
+        if first_part + second_part == "All In":
+            return (first_part + second_part, 0)
+
+        try:
+            val = int(second_part)
+            assert val > 0
+        except:
+            self.exc.exit()
+            self.exc = None
+
+            if raise_errors:
+                raise TestError(f"Niepoprawny wartość raise: {second_part}")
+            return None
+        return (first_part, val)
+
+
+class FakePoker(PokerCode):
+    def __init__(self):
+        super().__init__(username="0", exc=None)
+
+    def send_start_info(self, *args, **kwargs) -> None:
+        pass
+
+    def get_move(self, ctx: PlayerInfo, *args, **kwargs) -> tuple[str, int] | None:
+        moves = [("Fold",0)]
+        i = ctx.twojIndex
+
+        if ctx.hajs[i]:
+            moves.append(("All In",0))
+
+        if ctx.stawka - ctx.stawki[i] <= ctx.hajs[i]:
+            moves.append(("Call",0))
+
+            if ctx.hajs[i] + ctx.stawki[i] >= ctx.stawka:
+                moves.append(("Raise", randint(ctx.stawka, ctx.hajs[i] + ctx.stawki[i])))
+
+        if ctx.stawki[i] == ctx.stawka:
+            moves.append(("Check",0))
+
+        return choice(moves)
