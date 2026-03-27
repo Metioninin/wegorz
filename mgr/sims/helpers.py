@@ -88,3 +88,12 @@ class FakePrisoner(Prisoner):
 
     def get_move(self, *args, **kwargs) -> PrisonMove:
         return PrisonMove.COOPERATE
+
+
+todelete = ["Fold", "Raise 10", "Call"]
+@dataclass
+class PokerCode:
+    username: str
+
+    def get_move(self, context: Any) -> str:
+        return choice(todelete)
