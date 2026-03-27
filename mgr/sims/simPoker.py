@@ -255,7 +255,7 @@ def _simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], rais
                 i = (i + 1) % pCount
                 continue
             move = playerCodes[i].get_move(PlayerInfo(i, hajs, stawki, stawka, pula, ownCards[i], mutualCards), raise_errors)
-            move = ("error", 0)
+            move = ("Error", 0)
 
             print("Gracz " + str(i))
             print(move[0] + " " + str(move[1]))
@@ -301,8 +301,8 @@ def _simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], rais
                     if raise_errors:
                         raise TestError("Robisz allin bez hajsu")
                     winner = PlayerFold(i, folded,  stawki)
-                    move[0] = "error"
-            elif move[0] == "error":
+                    move[0] = "Error"
+            elif move[0] == "Error":
                 winner = PlayerFold(i, folded,  stawki)
 
             movesNotation.append(UnityMove(i, hajs[i], move[1], move[0], pula))
