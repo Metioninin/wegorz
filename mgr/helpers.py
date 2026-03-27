@@ -1,7 +1,6 @@
 from dataclasses import dataclass
+from textwrap import shorten
 from typing import Literal
-
-from mgr.exec import BaseExecutor
 
 
 @dataclass
@@ -9,6 +8,7 @@ class Subm:
     id: int
     code: str
     lang: Literal["CPP", "PY"]
+    round_id: int
 
 
 Status = Literal[
@@ -21,11 +21,9 @@ Status = Literal[
 ]
 
 EXC_TIMEOUT=0.5
-EXC_MEM_LIMIT=64
+EXC_MEM_LIMIT=64*1024
+EXC_OUT_LIMIT=2000
 
 
-class Simulator():
-    def test(self, exec: BaseExecutor):
-        # TODO: if compilation error, then raise ExecutionError
-        #       and prevent executor from raising its error here
-        pass
+def wrap_err(text: str) -> str:
+    return shorten(text, width=50, placeholder='...')

@@ -5,13 +5,12 @@ from multiprocessing import Pool, cpu_count
 from time import sleep
 
 from mgr.db import get_conn, get_unprocessed_subm, set_status
-from mgr.helpers import Simulator
 from mgr.work import work
 
 
 # setup signal
 def handle_sigint(signum, frame):
-    print("Exiting...")
+    logging.info("Exiting...")
     sys.exit(0)
 
 
@@ -49,4 +48,4 @@ while True:
             subm_status = "testowanie" if subm.lang == "PY" else "kompilacja"
             set_status(subm.id, status=subm_status, conn=conn)
 
-            work_pool.apply(func=work, args=(subm, Simulator()))
+            work_pool.apply(func=work, args=(subm,))

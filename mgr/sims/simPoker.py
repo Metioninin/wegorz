@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from mgr.sims.subm import PokerCode
+from mgr.sims.helpers import PokerCode
 import random
 import json
-from typing import Any
 from itertools import combinations
 from collections import Counter
 
@@ -193,7 +192,8 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
                 "index": m.index,
                 "money": m.money,
                 "bet": m.bet,
-                "move": m.move
+                "move": m.move,
+                "pula": m.pula
             })
         
         mutual_cards_list = [

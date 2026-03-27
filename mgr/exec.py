@@ -1,12 +1,13 @@
 import os
-import signal
+import select
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import copyfile
+from threading import Thread
+from typing import IO
 
-from pexpect.popen_spawn import PopenSpawn
-import pexpect
+from mgr.helpers import EXC_OUT_LIMIT
 
 
 class ExecutionError(Exception):
@@ -22,13 +23,12 @@ class BaseExecutor:
     exit_timeout: int = 5
 
     _sandbox_dir: Path | None = None
-    _proc: PopenSpawn | None = None
+    _proc: subprocess.Popen | None = None
     _setup_finished: bool = False
-
-    _stdout_length: int = 0
-    _stderr_length: int = 0
+    _running: bool = False
 
     def start_isolation(self) -> None:
+        assert self._sandbox_dir is None
         subprocess.run(
             args=["isolate", f"--box-id={self.box_id}", "--cleanup"],
             timeout=self.exit_timeout,
@@ -46,46 +46,107 @@ class BaseExecutor:
         self._setup_finished = True
 
     def run(self, dirs: list[str], cmd: list[str], *args, **kwargs) -> None:
-        assert self._sandbox_dir, "isolation not started"
         assert self._setup_finished, "setup not finished"
+        assert not self._running, "already running"
 
         options = [f"--box-id={self.box_id}", f"--mem={self.mem_limit}", "-s"]
         options += [f"--dir={d}" for d in dirs]
 
-        self._proc = PopenSpawn(
-            cmd=["isolate"] + options + ["--run", "--"] + cmd,
+        self._proc = subprocess.Popen(
+            args=["isolate"] + options + ["--run", "--"] + cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=self._sandbox_dir,
-            encoding="utf-8",
+            bufsize=0,
+            text=True,
         )
+        self._running = True
 
     def send_line(self, line: str):
         assert self._proc
-        self._proc.sendline(line)
+        assert self._proc.stdin
+        assert self._running, "not running"
+
+        self._proc.stdin.write(line + "\n")
+        self._proc.stdin.flush()
 
     def read_string(self) -> str:
         assert self._proc
+        assert self._proc.stdout
+        assert self._running, "not running"
 
-        result = self._proc.expect(
-            pattern=[r"\S+\s+", pexpect.TIMEOUT, pexpect.EOF],
-            timeout=self.timeout,
+        l_word: list[str] = []
+        l_exception: list[Exception] = []
+
+        def _read_string(stdout: IO, l_exception: list, l_word: list) -> None:
+            try:
+                _, _, _ = select.select([stdout], [], [])
+
+                word = ""
+                word_started: bool = False
+
+                while True:
+                    char = stdout.read(1)
+
+                    if char == b"":
+                        break
+
+                    if char.isspace():
+                        if word_started:
+                            break
+                        else:
+                            continue
+
+                    word += char
+                    word_started = True
+
+                    if len(word) > EXC_OUT_LIMIT:
+                        raise ExecutionError(
+                            f"Output is too long, max is {EXC_OUT_LIMIT} chars per query"
+                        )
+
+                l_word.append(word)
+            except Exception as e:
+                l_exception.append(e)
+
+        t = Thread(
+            target=_read_string,
+            args=(self._proc.stdout, l_exception, l_word),
+            daemon=True,
         )
+        t.start()
+        t.join(timeout=self.timeout)
 
-        match result:
-            case 0:
-                assert isinstance(self._proc.after, str)
-                return self._proc.after
-            case 1:
-                raise ExecutionError("Time limit exceeded")
-            case 2:
-                raise ExecutionError("Expected output, but reached EOF")
-            case _:
-                raise NotImplementedError()
+        if l_exception:
+            raise l_exception[0]
+
+        if t.is_alive():
+            self._proc.poll()
+            match self._proc.returncode:
+                case None:
+                    raise ExecutionError("Time limit exceeded for anwser")
+                case 0:
+                    raise ExecutionError("Expected output, but got EOF")
+                case _:
+                    if self._proc.stderr:
+                        stderr = self._proc.stderr.read(EXC_OUT_LIMIT)
+                    else:
+                        stderr = ""
+                    raise ExecutionError(f"Runtime error\n{stderr}")
+
+        assert len(l_word) == 1
+        return l_word[0]
 
     def exit(self) -> None:
         if self._proc is None:
             return
 
-        self._proc.kill(signal.SIGKILL)
+        self._sandbox_dir = None
+        self._setup_finished = False
+        self._running = False
+
+        self._proc.kill()
         self._proc = None
 
         subprocess.run(
@@ -148,8 +209,8 @@ def compile_cpp(code: str, result_path: Path, box_id: int) -> None:
 
     options = [
         f"--box-id={box_id}",
-        f"--mem={COMPILE_MEM_LIMIT}", # NOTE: vulnerability, works only for one process
-        "--processes=1024", # no limit
+        f"--mem={COMPILE_MEM_LIMIT}",  # NOTE: vulnerability, works only for one process
+        "--processes=1024",  # no limit
         f"--fsize={COMPILE_OUT_LIMIT}",
         "--dir=/usr",
     ]
