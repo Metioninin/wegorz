@@ -79,6 +79,23 @@
 
 {% block scripts %}
     <script>
+    window.addEventListener('pageshow', (event) => {
+        // Clear file input and related UI on back navigation or reload
+        // unless we want to support state restoration (complex with files)
+        // For now, let's just ensure hidden-code doesn't block textarea
+        const codeArea = document.getElementById('code');
+        const hiddenCode = document.getElementById('hidden-code');
+        const fileInput = document.getElementById('fileInput');
+        
+        if (fileInput.files.length === 0) {
+            hiddenCode.value = "";
+            codeArea.disabled = false;
+        } else {
+            // This might happen if browser restores file input (rare but possible in some)
+            handleFile({target: fileInput});
+        }
+    });
+
     function handleFile(e) {
         const file = e.target.files[0];
         const codeArea = document.getElementById('code');
@@ -139,7 +156,8 @@
         const codeArea = document.getElementById('code');
         const hiddenCode = document.getElementById('hidden-code');
         
-        if (!hiddenCode.value) {
+        // If textarea is enabled, it means no file is selected (or it was cleared)
+        if (!codeArea.disabled) {
             hiddenCode.value = codeArea.value;
         }
 
