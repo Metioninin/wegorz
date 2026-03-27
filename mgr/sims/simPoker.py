@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from mgr.sims.helpers import PokerCode
+from mgr.sims.helpers import TestError
 import random
 import json
 from itertools import combinations
@@ -219,8 +220,10 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
 blind = 10
-def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]]):
-    random.seed(42)
+def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise_errors: bool = False):
+
+    #if raise_errors:
+        #raise TestError("zlke")
     hajs = []
     stawki = []
     pCount = len(playerCodes)
@@ -269,13 +272,21 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]]):
                 winner = PlayerFold(i, folded, stawki) #ostatni foldujacy to winner
             elif move[0] == "Check":
                 if stawki[i] < stawka:
+                    if raise_errors:
+                        raise TestError("Proba checka jak byla stawka wieksza od twojej")
                     winner = PlayerFold(i, folded, stawki) #nie mogl checkowac bo musial calla zrobic
+                    move[0] = "error"
             elif move[0] == "Raise":
                 if stawka > move[1]:
+                    if raise_errors:
+                        raise TestError("Niby robisz raise a dajesz mniej niz ktos inny dal")
                     winner = PlayerFold(i, folded, stawki) #nie mogl raisowac bo ktos postawil wiecej
+                    move[0] = "error"
                 elif move[1] - stawki[i] > hajs[i]:
-                    pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
-                    move[0] = "All In"
+                    if raise_errors:
+                        raise TestError("Robisz raisea a nie masz tyle hajsu")
+                    winner = PlayerFold(i, folded,  stawki)
+                    move[0] = "error"
                 else:
                     hajs[i] -= move[1] - stawki[i]
                     pula += move[1] - stawki[i]
@@ -283,8 +294,10 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]]):
                     stawki[i] = move[1]
             elif move[0] == "Call":
                 if stawka - stawki[i] > hajs[i]:
-                    pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki) #nie mogl callowac bo mial za malo hajsu
-                    move[0] = "All In"
+                    if raise_errors:
+                        raise TestError("Robisz calla a nie masz tyle hajsu")
+                    winner = PlayerFold(i, folded,  stawki)
+                    move[0] = "error"
                 else:
                     hajs[i] -= stawka - stawki[i]
                     pula += stawka - stawki[i]
