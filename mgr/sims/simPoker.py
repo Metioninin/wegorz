@@ -275,18 +275,18 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
                     if raise_errors:
                         raise TestError("Proba checka jak byla stawka wieksza od twojej")
                     winner = PlayerFold(i, folded, stawki) #nie mogl checkowac bo musial calla zrobic
-                    move[0] = "error"
+                    move[0] = "Error"
             elif move[0] == "Raise":
                 if stawka > move[1]:
                     if raise_errors:
                         raise TestError("Niby robisz raise a dajesz mniej niz ktos inny dal")
                     winner = PlayerFold(i, folded, stawki) #nie mogl raisowac bo ktos postawil wiecej
-                    move[0] = "error"
+                    move[0] = "Error"
                 elif move[1] - stawki[i] > hajs[i]:
                     if raise_errors:
                         raise TestError("Robisz raisea a nie masz tyle hajsu")
                     winner = PlayerFold(i, folded,  stawki)
-                    move[0] = "error"
+                    move[0] = "Error"
                 else:
                     hajs[i] -= move[1] - stawki[i]
                     pula += move[1] - stawki[i]
@@ -297,7 +297,7 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
                     if raise_errors:
                         raise TestError("Robisz calla a nie masz tyle hajsu")
                     winner = PlayerFold(i, folded,  stawki)
-                    move[0] = "error"
+                    move[0] = "Error"
                 else:
                     hajs[i] -= stawka - stawki[i]
                     pula += stawka - stawki[i]
