@@ -35,7 +35,7 @@ public class Player : MonoBehaviour
         pfp.sprite = pfpIcons[random.Next(0, pfpIcons.Length - 1)];
     }
 
-    public void UpdateInfo(PlayerInfo info)
+    public void UpdateInfo(MoveInfo info)
     {
         money.text = info.money.ToString() + "$";
         if (info.move == "Raise" || info.move == "Bet")
@@ -55,7 +55,6 @@ public class Player : MonoBehaviour
                 card.color = new Color(card.color.r, card.color.g, card.color.b, .2f);
             SoundManager.Instance.PlaySfx(SoundManager.Instance.fold);
         }
-
     }
 
     IEnumerator ShowTextAnimation(string text)

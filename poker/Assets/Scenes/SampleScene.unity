@@ -158,8 +158,8 @@ MonoBehaviour:
   card: {fileID: 4593155377918379793, guid: b2f9092623ab5d8449de38e8c54a83fb, type: 3}
   cardHolder: {fileID: 1349826963}
   distanceBetweenCards: 1.1
-  moveTime: 0.5
-  frameTime: 0.5
+  moveTime: 3
+  frameTime: 3.5
   ranking: {fileID: 353213643}
   rankingArea: {fileID: 1330867430}
   gameArea: {fileID: 368103830}
