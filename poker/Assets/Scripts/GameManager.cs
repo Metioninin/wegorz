@@ -28,6 +28,7 @@ public class MoveInfo
     public int money;
     public int bet;
     public string move;
+    public int pula;
 }
 
 [Serializable]
@@ -66,7 +67,7 @@ public class GameManager : MonoBehaviour
     {
         SoundManager.Instance.PlaySfx(SoundManager.Instance.start);
         Notation data = games[currentGame];
-        potText.text = "0$";
+        potText.text = (data.players.Count * 10).ToString() + "$"; //TUTAJ ZMIEN BLINDA
         rankingArea.SetActive(false);
         gameArea.SetActive(true);
         CreatePlayer(new Vector2(-right, 0), data.players[0]);
@@ -86,7 +87,7 @@ public class GameManager : MonoBehaviour
         StartCoroutine(NextFrame());
     }
 
-    int currFrame = 1;
+    int currFrame = 0;
     int currentPot = 0;
     IEnumerator NextFrame()
     {
@@ -97,7 +98,7 @@ public class GameManager : MonoBehaviour
         }
         Frame frame = data.frames[currFrame];
 
-        for (int i = frame.mutualCards.Count - 1; i >= instCards.Count; i--)
+        for (int i = instCards.Count; i < frame.mutualCards.Count; i++)
         {
             CreateMutualCard(frame.mutualCards[i]);
             yield return new WaitForSeconds(moveTime);
@@ -105,10 +106,9 @@ public class GameManager : MonoBehaviour
 
         for (int i = 0; i < frame.moves.Count; i++)
         {
-            if (frame.moves[i].move == "Folded") continue;
             instPlayers[frame.moves[i].index].GetComponent<Player>().Highlight(true, false);
             instPlayers[frame.moves[i].index].GetComponent<Player>().UpdateInfo(frame.moves[i]);
-            currentPot += frame.moves[i].bet;
+            currentPot = frame.moves[i].pula;
             potText.text = currentPot.ToString() + "$";
             yield return new WaitForSeconds(moveTime);
             instPlayers[frame.moves[i].index].GetComponent<Player>().Highlight(false, false);

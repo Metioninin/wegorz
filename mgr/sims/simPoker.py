@@ -34,6 +34,7 @@ class UnityMove:
     money: int
     bet: int
     move: str
+    pula: int
 
 @dataclass
 class UnityPlayer:
@@ -180,7 +181,7 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
             "money": p.money,
             "bet": p.bet,
             "cards": [
-                {"kolor": c.kolor, "numer": str(c.numer)} for c in p.cards
+                {"kolor": c.kolor, "numer": c.numer} for c in p.cards
             ]
         })
 
@@ -196,7 +197,7 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
             })
         
         mutual_cards_list = [
-            {"kolor": c.kolor, "numer": str(c.numer)} for c in f.mutualCards
+            {"kolor": c.kolor, "numer": c.numer} for c in f.mutualCards
         ]
         
         notation_data["frames"].append({
@@ -208,18 +209,17 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
     for name, score in ranking:
         notation_data["ranking"].append({
             "name": name,
-            "points": float(score)
+            "points": score
         })
 
-    with open("notka.json", "w", encoding="utf-8") as f:
-        json.dump(notation_data, f, indent=4, ensure_ascii=False)
-    return {}
+    #with open("notka.json", "w", encoding="utf-8") as f:
+        #json.dump(notation_data, f, indent=4, ensure_ascii=False)
+    #return {}
 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
 blind = 10
-begin = 1000
-def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, float]]):
+def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]]):
     random.seed(42)
     hajs = []
     stawki = []
@@ -236,11 +236,16 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, float]]):
     playerNotation = []
     for kolor in kolory:
         for numer in numerki:
-            deck.append(Card(kolor, numer))
-    for i in range(pCount):
-        hajs.append(begin - blind)
-        stawki.append(blind)
-        pula += blind
+            deck.append(Card(kolor, numer)) #generowanie decku
+    for i in range(pCount): #generowanie graczy (kazdy daje blinda)
+        if ranking[i][1] == 0:
+            folded[i] = True
+        coStawiam = min(blind, ranking[i][1])
+        hajs.append(ranking[i][1] - coStawiam)
+        stawki.append(coStawiam)
+        pula += coStawiam
+        if coStawiam < blind and not folded[i]:
+            allIned[i] = True
         for j in range(2):
             ownCards[i].append(RandomCard(deck))
         playerNotation.append(UnityPlayer(playerCodes[i].username, hajs[i], blind, [CardToUnityCard(ownCards[i][0]), CardToUnityCard(ownCards[i][1])]))
@@ -251,16 +256,17 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, float]]):
         ruchy = 0
         i = 0
         movesNotation = []
+        #dopoki kazdy nie zrobi ruchu i kazdy nie wyrowna stawki
         while ruchy < pCount or any(stawki[k] != stawka for k in range(pCount) if not (folded[k] or allIned[k])):
             ruchy += 1
-            if folded[i] or allIned[i]:
+            if folded[i] or allIned[i]: #jak sfoldowal albo nie ma hajsu to go nie pytamy
                 i = (i + 1) % pCount
                 continue
             move = playerCodes[i].get_move(PlayerInfo(i, hajs, stawki, stawka, pula, ownCards[i], mutualCards))
             print("Gracz " + str(i))
             print(move[0] + " " + str(move[1]))
             if move[0] == "Fold":
-                winner = PlayerFold(i, folded, stawki)
+                winner = PlayerFold(i, folded, stawki) #ostatni foldujacy to winner
             elif move[0] == "Check":
                 if stawki[i] < stawka:
                     winner = PlayerFold(i, folded, stawki) #nie mogl checkowac bo musial calla zrobic
@@ -269,7 +275,7 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, float]]):
                     winner = PlayerFold(i, folded, stawki) #nie mogl raisowac bo ktos postawil wiecej
                 elif move[1] - stawki[i] > hajs[i]:
                     pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
-                    move[0] = "AllIn"
+                    move[0] = "All In"
                 else:
                     hajs[i] -= move[1] - stawki[i]
                     pula += move[1] - stawki[i]
@@ -278,15 +284,15 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, float]]):
             elif move[0] == "Call":
                 if stawka - stawki[i] > hajs[i]:
                     pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki) #nie mogl callowac bo mial za malo hajsu
-                    move[0] = "AllIn"
+                    move[0] = "All In"
                 else:
                     hajs[i] -= stawka - stawki[i]
                     pula += stawka - stawki[i]
                     stawki[i] = stawka
-            elif move[0] == "AllIn":
+            elif move[0] == "All In":
                 pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
 
-            movesNotation.append(UnityMove(i, hajs[i], move[1], move[0]))
+            movesNotation.append(UnityMove(i, hajs[i], move[1], move[0], pula))
             i = (i + 1) % pCount
         unityCards = []
         for myCard in mutualCards:
