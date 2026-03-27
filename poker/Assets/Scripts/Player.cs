@@ -38,12 +38,13 @@ public class Player : MonoBehaviour
     public void UpdateInfo(MoveInfo info)
     {
         money.text = info.money.ToString() + "$";
-        if (info.move == "Raise" || info.move == "Bet")
+        if (info.move == "Raise")
             info.move += "\n" + info.bet.ToString() + "$";
-        if (info.move != "Fold" && info.move != "Check" && info.move != "All In")
+        if (info.move != "Fold" && info.move != "Check" && info.move != "All In" && info.move != "Error")
             SoundManager.Instance.PlaySfx(SoundManager.Instance.bet);
         else if (info.move == "All In")
             SoundManager.Instance.PlaySfx(SoundManager.Instance.allin);
+
         StartCoroutine(ShowTextAnimation(info.move));
         if (info.move == "Fold")
         {
@@ -54,6 +55,15 @@ public class Player : MonoBehaviour
             foreach (var card in GetComponentsInChildren<Image>())
                 card.color = new Color(card.color.r, card.color.g, card.color.b, .2f);
             SoundManager.Instance.PlaySfx(SoundManager.Instance.fold);
+        }
+        else if(info.move == "Error")
+        {
+            foreach (var card in GetComponentsInChildren<SpriteRenderer>())
+                card.color = new Color(1, 0, 0, .1f);
+            foreach (var card in GetComponentsInChildren<TextMeshProUGUI>())
+                card.color = new Color(1, 0, 0, .1f);
+            foreach (var card in GetComponentsInChildren<Image>())
+                card.color = new Color(1, 0, 0, .1f);
         }
     }
 
