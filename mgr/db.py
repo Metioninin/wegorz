@@ -39,7 +39,7 @@ def get_unprocessed_subm(conn: Connection) -> Subm | None:
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-            SELECT id, code, lang
+            SELECT id, code, lang, round_id
             FROM submissions
             WHERE status = 'oczekiwanie'
             ORDER BY id ASC

@@ -36,10 +36,6 @@ def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
-    with open("notka.json", "w", encoding="utf-8") as f:
-        json.dump(notation_data, f, indent=4, ensure_ascii=False)
-    return {}
-
 
 @dataclass
 class PlayerInfo:
@@ -264,22 +260,6 @@ def simulate(players: list[Code], ranking: list[tuple[str, float]]):
                 players[i].bot.x, players[i].bot.y
             )
         zoneNotation.append(zone)
-
-        print("Koniec " + str(zoneCurr) + " klatki:")
-        print(str(players_count) + " graczy")
-        print(str(zone) + " zone")
-        for i in range(players_count):
-            print(
-                players[i].username
-                + " "
-                + str(players[i].top.x)
-                + " "
-                + str(players[i].top.y)
-                + " "
-                + str(players[i].bot.x)
-                + " "
-                + str(players[i].bot.y)
-            )
 
     playerNamesNotation.append(players[0].username)
     playerNamesNotation.reverse()

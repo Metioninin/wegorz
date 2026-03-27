@@ -1,22 +1,31 @@
 import json
+from pathlib import Path
 
-from mgr.sims.helpers import PrisonCode
+from mgr.sims.helpers import PrisonMove, Prisoner
+
+Ranking = list[tuple[str, float]]
 
 
 def calc_ranking(
-    ranking: list[tuple[str, float]], gain1, gain2, players: list[PrisonCode]
-):
+    ranking: Ranking, gain1: float, gain2: float, players: tuple[Prisoner, Prisoner]
+) -> None:
     for i in range(len(ranking)):
         if ranking[i][0] == players[0].username:
-            nowy = (ranking[i][0], ranking[i][1] + gain1)
-            ranking[i] = nowy
-        if ranking[i][0] == players[1].username:
-            nowy = (ranking[i][0], ranking[i][1] + gain2)
-            ranking[i] = nowy
+            ranking[i] = (ranking[i][0], ranking[i][1] + gain1)
+        elif ranking[i][0] == players[1].username:
+            ranking[i] = (ranking[i][0], ranking[i][1] + gain2)
     ranking.sort(key=lambda x: x[1], reverse=False)
 
 
-def generate_notation(name1, name2, move1, move2, gain1, gain2, ranking):
+def generate_notation(
+    name1: str,
+    name2: str,
+    move1: PrisonMove | None,
+    move2: PrisonMove | None,
+    gain1: float,
+    gain2: float,
+    ranking: Ranking,
+) -> str:
     notation_data = {
         "name1": name1,
         "name2": name2,
@@ -32,45 +41,66 @@ def generate_notation(name1, name2, move1, move2, gain1, gain2, ranking):
 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
-    with open("notka.json", "w", encoding="utf-8") as f:
-        json.dump(notation_data, f, indent=4, ensure_ascii=False)
-    return {}
+
+GAINS = {
+    (None, None): (0, 0),
+    (None, PrisonMove.COOPERATE): (0, 10),
+    (None, PrisonMove.BETRAY): (0, 10),
+    (PrisonMove.COOPERATE, None): (10, 0),
+    (PrisonMove.BETRAY, None): (10, 0),
+    (PrisonMove.COOPERATE, PrisonMove.COOPERATE): (1, 1),
+    (PrisonMove.BETRAY, PrisonMove.BETRAY): (5, 5),
+    (PrisonMove.BETRAY, PrisonMove.COOPERATE): (10, 0),
+    (PrisonMove.COOPERATE, PrisonMove.BETRAY): (0, 10),
+}
 
 
-def simulate(players: list[PrisonCode], ranking: list[tuple[str, float]]):
-    move1 = players[0].get_move(players[1].username)
-    move2 = players[1].get_move(players[0].username)
-    gain1 = 0
-    gain2 = 0
-    if move1 == "Wspolpraca" and move2 == "Wspolpraca":
-        gain1 = 1
-        gain2 = 1
-    elif move1 == "Wspolpraca" and move2 == "Niezgoda":
-        gain1 = 10
-        gain2 = 0
-    elif move1 == "Niezgoda" and move2 == "Wspolpraca":
-        gain1 = 0
-        gain2 = 10
-    else:
-        gain1 = 5
-        gain2 = 5
+def _simulate(
+    players: tuple[Prisoner, Prisoner],
+    ranking: list[tuple[str, float]],
+    test_mode: bool,
+) -> str:
+    move1 = players[0].get_move(raise_errors=test_mode)
+    move2 = players[1].get_move(raise_errors=test_mode)
+
+    gain1, gain2 = GAINS[(move1, move2)]
 
     calc_ranking(ranking, gain1, gain2, players)
-    move11 = 0
-    move22 = 0
-    if move1 == "Niezgoda":
-        move11 = 1
-    if move2 == "Niezgoda":
-        move22 = 1
-    return (
-        generate_notation(
-            players[0].username,
-            players[1].username,
-            move11,
-            move22,
-            gain1,
-            gain2,
-            ranking,
-        ),
+
+    return generate_notation(
+        players[0].username,
+        players[1].username,
+        move1,
+        move2,
+        gain1,
+        gain2,
         ranking,
     )
+
+
+def simulate(
+    players: tuple[Prisoner, Prisoner],
+    match_id: int,
+    save_path: Path | None = None,
+    ranking: Ranking | None = None
+) -> None:
+    "If save_path not proviede then it can raise TestError"
+
+    test_mode=save_path is None
+
+    # give start info to players
+    for player_id in range(2):
+        enemy = players[1 - player_id]
+        players[player_id].send_start_info(enemy.username)
+
+    # create dummy ranking for solution testing
+    if ranking is None:
+        assert test_mode
+        ranking = []
+
+    # simulate
+    notation = _simulate(players, ranking, test_mode)
+
+    if save_path:
+        with open(save_path / f"{match_id}", "w") as f:
+            f.write(notation)
