@@ -50,7 +50,7 @@ def generate_notation(
     for name, score in ranking:
         notation_data["ranking"].append({"name": name, "points": float(score)})
 
-    return json.dumps(notation_data, indent=4, ensure_ascii=False)
+    return notation_data
 
 
 GAINS = {
@@ -91,7 +91,6 @@ def _simulate(
 
 def simulate(
     players: tuple[Prisoner, Prisoner],
-    save_path: Path | None = None,
     ranking: Ranking | None = None
 ) -> None:
     "If save_path not proviede then it can raise TestError"
@@ -109,8 +108,4 @@ def simulate(
         ranking = []
 
     # simulate
-    notation = _simulate(players, ranking, test_mode)
-
-    if save_path:
-        with open(save_path, "w") as f:
-            f.write(notation)
+    return _simulate(players, ranking, test_mode)

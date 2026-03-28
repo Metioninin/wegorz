@@ -224,7 +224,7 @@ def generate_notation(
     for name, score in ranking:
         notation_data["ranking"].append({"name": name, "points": score})
 
-    return json.dumps(notation_data, indent=4, ensure_ascii=False)
+    return notation_data
 
 BLIND = 10
 
@@ -397,7 +397,6 @@ def _simulate(
 
 def simulate(
     players: list[PokerCode],
-    save_path: Path | None = None,
     ranking: Ranking | None = None,
     money: Sequence[int] | None = None,
 ) -> None:
@@ -412,8 +411,4 @@ def simulate(
         ranking = [(p.username, s) for p, s in zip(players, money, strict=True)]
 
     # simulate
-    notation = _simulate(players, ranking, raise_errors=test_mode)
-
-    if save_path:
-        with open(save_path, "w") as f:
-            f.write(notation)
+    return _simulate(players, ranking, raise_errors=test_mode)

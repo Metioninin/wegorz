@@ -3,13 +3,14 @@ from random import shuffle
 import tempfile
 from dataclasses import dataclass
 from typing import Any, Generator
+import json
 
 from psycopg.rows import DictRow, dict_row
 from mgr.db import get_conn
 from mgr.exec import CppExecutor, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT
 
-from mgr.sims.helpers import FoldPoker, PokerCode, Prisoner
+from mgr.sims.helpers import FoldPoker, PokerCode, Prisoner, AgarioCode
 from mgr.sims.prison import simulate as simulate_prison
 from mgr.sims.simPoker import simulate as simulate_poker
 from mgr.sims.agario import simulate as simulate_agario
@@ -101,7 +102,7 @@ def run_match(
         case 1:
             assert len(execs) == 2
             players = (Prisoner(*execs[0]), Prisoner(*execs[1]))
-            simulate_prison(players, save_path, ranking)
+            return simulate_prison(players, ranking)
         case 2:
             assert len(execs) <= 6
 
@@ -112,10 +113,13 @@ def run_match(
 
             shuffle(players)
 
-            simulate_poker(players, save_path, ranking)
+            return simulate_poker(players, ranking)
         case 3:
-            # TODO:
-            pass
+            assert len(execs) <= 6
+
+            players = [AgarioCode(login, exc) for login, exc in execs]
+            shuffle(players)
+            return simulate_agario(players, ranking)
 
 
 if __name__ == "__main__":
@@ -133,7 +137,8 @@ if __name__ == "__main__":
     assert matches
 
     Path("/matches").mkdir(exist_ok=True)
-
+    save_path = Path(f"/matches/match.json")
+    data = []
     for midx, match in enumerate(matches):
         execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
 
@@ -147,10 +152,9 @@ if __name__ == "__main__":
             exc.setup_sandbox(Path(exc_path.name))
             exc.run()
 
-        save_path = Path(f"/matches/match.{midx}.json")
-        print(f"mecz {midx} wyladowal w {save_path.absolute()}", flush=True)
-
-        run_match(rnd, save_path, ranking, execs)
+        data.append(run_match(rnd, save_path, ranking, execs))
 
         for exc in execs:
             exc[1].exit()
+    tasiemiec = json.dumps(data, indent=4, ensure_ascii=False)
+    save_path.write_text(tasiemiec, encoding='utf-8')

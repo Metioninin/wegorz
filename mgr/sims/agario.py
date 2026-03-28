@@ -35,7 +35,7 @@ def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
             {"order": {"name": name, "points": float(score)}}
         )
 
-    return json.dumps(notation_data, indent=4, ensure_ascii=False)
+    return notation_data
 
 
 def intersect(topa: Pair, bota: Pair, topb: Pair, botb: Pair) -> bool:
@@ -271,7 +271,7 @@ def _simulate(players: list[AgarioCode], ranking: list[tuple[str, int]]):
         newRanking,
     )
 
-def simulate(players: list[AgarioCode], save_path: Path | None = None,
+def simulate(players: list[AgarioCode],
              ranking: Ranking | None = None) -> None:
     test_mode = save_path is None
 
@@ -282,8 +282,4 @@ def simulate(players: list[AgarioCode], save_path: Path | None = None,
             ranking.append((p.username, 0))
 
     # simulate
-    notation = _simulate(players, ranking, raise_errors=test_mode)
-
-    if save_path:
-        with open(save_path, "w") as f:
-            f.write(notation)
+    return _simulate(players, ranking, raise_errors=test_mode)
