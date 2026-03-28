@@ -155,5 +155,7 @@ if __name__ == "__main__":
 
         for exc in execs:
             exc[1].exit()
-    tasiemiec = json.dumps(data, indent=4, ensure_ascii=False)
+        
+    final = {"data": data}
+    tasiemiec = json.dumps(final, indent=4, ensure_ascii=False)
     save_path.write_text(tasiemiec, encoding='utf-8')
