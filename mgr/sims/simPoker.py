@@ -1,32 +1,21 @@
-from dataclasses import dataclass
-from mgr.sims.helpers import PokerCode
-from mgr.sims.helpers import TestError
-import random
 import json
-from itertools import combinations
+from pathlib import Path
+import random
 from collections import Counter
+from dataclasses import dataclass
+from itertools import combinations
+
+from mgr.sims.helpers import Card, PlayerInfo, PokerCode, TestError
+
+Ranking = list[tuple[str, int]]
 
 kolory = ["kier", "pik", "karo", "trefl"]
 numerki = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
-@dataclass
-class Card:
-    kolor: str
-    numer: str
-
-@dataclass
-class PlayerInfo:
-    twojIndex: int
-    hajs: list[int]
-    stawki: list[int]
-    stawka: int
-    pula: int
-    ownCards: list[Card]
-    mutualCards: list[Card]
 
 @dataclass
 class UnityCard:
     kolor: int
-    numer: int
+    numer: str
 
 @dataclass
 class UnityMove:
@@ -158,14 +147,14 @@ def AllIn(i: int, allIned: list[bool], hajs: list[int], pula: int, stawka: int, 
     hajs[i] = 0
     return pula, stawka
 
-def calc_ranking(ranking: list[tuple[str, float]], hajs: list[int], names: list[str]):
+def calc_ranking(ranking: list[tuple[str, int]], hajs: list[int], names: list[str]):
     for i in range(len(names)):
         for j in range(len(ranking)):
             if(ranking[j][0] == names[i]):
                 ranking[j] = (ranking[j][0], hajs[i])
                 break
 
-def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: list[tuple[str, float]], winnerIndex: int):
+def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: list[tuple[str, int]], winnerIndex: int):
     # Budujemy główny obiekt Notation
     notation_data = {
         "players": [],
@@ -220,7 +209,7 @@ def generate_notation(players: list[UnityPlayer], frames: list[Frame], ranking: 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
 blind = 10
-def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise_errors: bool = False):
+def _simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise_errors: bool):
 
     #if raise_errors:
         #raise TestError("zlke")
@@ -265,9 +254,12 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
             if folded[i] or allIned[i]: #jak sfoldowal albo nie ma hajsu to go nie pytamy
                 i = (i + 1) % pCount
                 continue
-            move = playerCodes[i].get_move(PlayerInfo(i, hajs, stawki, stawka, pula, ownCards[i], mutualCards))
+            move = playerCodes[i].get_move(PlayerInfo(i, hajs, stawki, stawka, pula, ownCards[i], mutualCards), raise_errors)
+            move = ("Error", 0)
+
             print("Gracz " + str(i))
             print(move[0] + " " + str(move[1]))
+
             if move[0] == "Fold":
                 winner = PlayerFold(i, folded, stawki) #ostatni foldujacy to winner
             elif move[0] == "Check":
@@ -284,7 +276,7 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
                     move[0] = "Error"
                 elif move[1] - stawki[i] > hajs[i]:
                     if raise_errors:
-                        raise TestError("Robisz raisea a nie masz tyle hajsu")
+                        raise TestError("Robisz raise a nie masz tyle hajsu")
                     winner = PlayerFold(i, folded,  stawki)
                     move[0] = "Error"
                 else:
@@ -295,7 +287,7 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
             elif move[0] == "Call":
                 if stawka - stawki[i] > hajs[i]:
                     if raise_errors:
-                        raise TestError("Robisz calla a nie masz tyle hajsu")
+                        raise TestError("Robisz call a nie masz tyle hajsu")
                     winner = PlayerFold(i, folded,  stawki)
                     move[0] = "Error"
                 else:
@@ -303,7 +295,15 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
                     pula += stawka - stawki[i]
                     stawki[i] = stawka
             elif move[0] == "All In":
-                pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
+                if hajs != 0:
+                    pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
+                else:
+                    if raise_errors:
+                        raise TestError("Robisz allin bez hajsu")
+                    winner = PlayerFold(i, folded,  stawki)
+                    move[0] = "Error"
+            elif move[0] == "Error":
+                winner = PlayerFold(i, folded,  stawki)
 
             movesNotation.append(UnityMove(i, hajs[i], move[1], move[0], pula))
             i = (i + 1) % pCount
@@ -335,4 +335,31 @@ def simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise
         names.append(playerCodes[i].username)
     calc_ranking(ranking, hajs, names)
     ranking.sort(key=lambda x: x[1], reverse=True)
-    return (generate_notation(playerNotation, frames, ranking, winner), ranking)
+    return generate_notation(playerNotation, frames, ranking, winner)
+
+
+def simulate(
+    players: list[PokerCode],
+    match_id: int,
+    save_path: Path | None = None,
+    ranking: Ranking | None = None
+) -> None:
+    "If save_path not proviede then it can raise TestError"
+
+    raise_errors=save_path is None
+
+    # give start info to players
+    for player in players:
+        player.send_start_info(len(players))
+
+    # create dummy ranking for solution testing
+    if ranking is None:
+        assert raise_errors
+        ranking = []
+
+    # simulate
+    notation = _simulate(players, ranking, raise_errors)
+
+    if save_path:
+        with open(save_path / f"{match_id}", "w") as f:
+            f.write(notation)

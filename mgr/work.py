@@ -6,9 +6,9 @@ from pathlib import Path
 from mgr.db import get_conn, set_message, set_status
 from mgr.exec import CppExecutor, ExecutionError, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT, Subm
-from mgr.sims.helpers import FakePrisoner, Prisoner, TestError
+from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError
 from mgr.sims.prison import simulate as simulate_prison
-
+from mgr.sims.simPoker import simulate as simulate_poker
 
 logger = logging.getLogger("MGR")
 
@@ -28,6 +28,10 @@ def run_simulator(
         case 1:
             start_exc()
             simulate_prison(players=(Prisoner("0", exc), FakePrisoner()), match_id=1)
+            stop_exc()
+        case 2:
+            start_exc()
+            simulate_poker(players=[PokerCode("0", exc), FakePoker()], match_id=1)
             stop_exc()
         case _:
             raise NotImplementedError()
