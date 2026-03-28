@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, StrEnum
 from random import choice, randint
 from typing import Any
@@ -121,17 +121,26 @@ class PlayerInfo:
 class PokerCode:
     username: str
     exc: BaseExecutor | None  # NOTE: must be started before
+    trace: bool = False
+    _comm: list[str] = field(default_factory=list)
 
     def send_start_info(self, players_count: int) -> None:
         assert self.exc
-        self.exc.send_line(f"{players_count}")
+        msg = f"{players_count}"
+        self.exc.send_line(msg)
 
-    def get_move(self, ctx: PlayerInfo, raise_errors: bool) -> tuple[str, int] | None:
+        if self.trace:
+            self._comm.append(msg)
+
+    def _get_move(self, ctx: PlayerInfo, raise_errors: bool) -> tuple[str, int] | None:
         if self.exc is None:
             return None
 
         for line in ctx.gen_lines():
             self.exc.send_line(line)
+            
+            if self.trace:
+                self._comm.append(line)
 
         try:
             first_part = self.exc.read_string()
@@ -176,6 +185,15 @@ class PokerCode:
                 raise TestError(f"Niepoprawny wartość raise: {wrap_err(second_part)}")
             return None
         return (first_part, val)
+
+    def get_move(self, ctx: PlayerInfo, raise_errors: bool) -> tuple[str, int] | None:
+        move = self._get_move(ctx, raise_errors)
+
+        if self.trace and move:
+            str_move = move[0] + ' ' + str(move[1]) if move[0] == "Raise" else move[0]
+            self._comm.append(str_move)
+
+        return move
 
 
 class FakePoker(PokerCode):
