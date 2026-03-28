@@ -219,6 +219,14 @@ class FakePoker(PokerCode):
         return choice(moves)
 
 
+class FoldPoker(PokerCode):
+    def send_start_info(self, *args, **kwargs) -> None:
+        pass
+
+    def get_move(self, ctx: PlayerInfo, *args, **kwargs) -> tuple[str, int] | None:
+        return ("Fold", 0)
+
+
 # poczatkowe sumy graczy (powinny sumowac sie do 6*1000)
 POKER_TESTS = (
     (1000, 1000, 1000, 1000, 1000, 1000),
