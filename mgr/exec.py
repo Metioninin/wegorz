@@ -68,8 +68,11 @@ class BaseExecutor:
         assert self._proc.stdin
         assert self._running, "not running"
 
-        self._proc.stdin.write(line + "\n")
-        self._proc.stdin.flush()
+        try:
+            self._proc.stdin.write(line + "\n")
+            self._proc.stdin.flush()
+        except BrokenPipeError:
+            pass
 
     def read_string(self) -> str:
         assert self._proc
