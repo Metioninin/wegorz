@@ -81,13 +81,14 @@ class BaseExecutor:
 
         def _read_string(stdout: IO, l_exception: list, l_word: list) -> None:
             try:
+                # wait for stdout
                 _, _, _ = select.select([stdout], [], [])
 
                 word = ""
                 word_started: bool = False
 
                 while True:
-                    char = stdout.read(1)
+                    char = os.read(stdout.fileno(), 1)
 
                     if char == b"":
                         break
@@ -98,7 +99,7 @@ class BaseExecutor:
                         else:
                             continue
 
-                    word += char
+                    word += char.decode()
                     word_started = True
 
                     if len(word) > EXC_OUT_LIMIT:
@@ -136,6 +137,7 @@ class BaseExecutor:
                     raise ExecutionError(f"Runtime error\n{stderr}")
 
         assert len(l_word) == 1
+        print("mam slowko!", l_word)
         return l_word[0]
 
     def exit(self) -> None:
