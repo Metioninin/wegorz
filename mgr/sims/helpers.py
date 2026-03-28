@@ -16,6 +16,8 @@ class Pair:
     x: int = 0
     y: int = 0
 
+    def __str__(self) -> str:
+        return str(self.x) + " " + str(self.y)
     def __add__(self, other):
         return Pair(self.x + other.x, self.y + other.y)
 
@@ -119,7 +121,6 @@ class PlayerInfo:
             " ".join([str(c) for c in self.mutualCards]),
         ]
 
-
 @dataclass
 class PokerCode:
     username: str
@@ -216,6 +217,69 @@ class FakePoker(PokerCode):
         if ctx.stawki[i] == ctx.stawka:
             moves.append(("Check", 0))
 
+        return choice(moves)
+    
+@dataclass
+class PlayerInfoAgario:
+    n: int
+    m: int
+    zone: int
+    top: list[Pair]
+    bot: list[Pair]
+
+    def gen_lines(self) -> list[str]:
+        linie = [str(self.n), str(self.m), str(self.zone)]
+        for t, b in zip(self.top, self.bot):
+            linie.append(str(t) + " " + str(b))
+
+        return linie
+
+class AgarioCode:
+    username: str
+    exc: BaseExecutor | None  # NOTE: must be started before
+    trace: bool = False
+    _comm: list[str] = field(default_factory=list)
+
+    def _get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> tuple[str, int] | None:
+        if self.exc is None:
+            return None
+
+        for line in ctx.gen_lines():
+            self.exc.send_line(line)
+
+            if self.trace:
+                self._comm.append(line)
+
+        try:
+            first_part = self.exc.read_string()
+        except ExecutionError as e:
+            if raise_errors:
+                raise TestError(str(e))
+            return None
+
+        if first_part in ("RIGHT", "LEFT", "UP", "DOWN", "NO_MOVE"):
+            return first_part
+        else:
+            self.exc.exit()
+            self.exc = None
+
+            if raise_errors:
+                raise TestError(f"Niepoprawny ruch: {wrap_err(first_part)}")
+            return None
+        
+    def get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> tuple[str, int] | None:
+        move = self._get_move(ctx, raise_errors)
+        return move
+    
+class FakeAgario(AgarioCode):
+    def __init__(self):
+        super().__init__(username="A", exc=None)
+
+    def send_start_info(self, *args, **kwargs) -> None:
+        pass
+
+    def get_move(self, ctx: PlayerInfoAgario, *args, **kwargs) -> tuple[str, int] | None:
+        moves = ["LEFT", "RIGHT", "UP", "DOWN", "NO_MOVE"]
         return choice(moves)
 
 

@@ -226,9 +226,7 @@ def generate_notation(
 
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
-
 BLIND = 10
-
 
 def _simulate(
     playerCodes: list[PokerCode], ranking: list[tuple[str, int]], raise_errors: bool

@@ -2,9 +2,10 @@ import json
 import math
 import random
 from dataclasses import dataclass
+from pathlib import Path
 
-from mgr.sims.helpers import Code, Pair
-
+from mgr.sims.helpers import AgarioCode, Pair, PlayerInfoAgario
+Ranking = list[tuple[str, int]]
 
 def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
     notation_data = {
@@ -37,15 +38,6 @@ def generate_notation(k, playerNames, framesTop, framesBottom, zone, ranking):
     return json.dumps(notation_data, indent=4, ensure_ascii=False)
 
 
-@dataclass
-class PlayerInfo:
-    n: int
-    m: int
-    zone: int
-    top: list[Pair]
-    bot: list[Pair]
-
-
 def intersect(topa: Pair, bota: Pair, topb: Pair, botb: Pair) -> bool:
     return not (
         bota.x <= topb.x or topa.x >= botb.x or bota.y >= topb.y or topa.y <= botb.y
@@ -76,9 +68,9 @@ def dfs(players: list[Code], me: int):
 
 
 def calc_ranking(
-    curr_ranking: list[tuple[str, float]],
+    curr_ranking: list[tuple[str, int]],
     results: list[str],
-    overwrite: list[tuple[str, float]],
+    overwrite: list[tuple[str, int]],
 ):
     for i in range(len(results)):
         for j in range(len(curr_ranking)):
@@ -92,7 +84,7 @@ def calc_ranking(
     return curr_ranking
 
 
-def simulate(players: list[Code], ranking: list[tuple[str, float]]):
+def _simulate(players: list[AgarioCode], ranking: list[tuple[str, int]]):
     # notation variables
     playerNamesNotation = []  # w kolejnosci rankingu
     framesTopNotation = []
@@ -158,7 +150,7 @@ def simulate(players: list[Code], ranking: list[tuple[str, float]]):
             )  # i-ty gracz musi byc pierwszy
             others_b[0], others_b[i] = others_b[i], others_b[0]
 
-            info = PlayerInfo(n, m, zone, others_t, others_b)
+            info = PlayerInfoAgario(n, m, zone, others_t, others_b)
             move = players[i].get_move(info)
             print(players[i].username + " rusza sie " + str(move))
             newMoves.append(move)  # zapisz na pozniej jaki ruch zrobil gracz i
@@ -278,3 +270,20 @@ def simulate(players: list[Code], ranking: list[tuple[str, float]]):
         ),
         newRanking,
     )
+
+def simulate(players: list[AgarioCode], save_path: Path | None = None,
+             ranking: Ranking | None = None) -> None:
+    test_mode = save_path is None
+
+    # create dummy ranking for solution testing
+    if ranking is None:
+        assert test_mode
+        for p in players:
+            ranking.append((p.username, 0))
+
+    # simulate
+    notation = _simulate(players, ranking, raise_errors=test_mode)
+
+    if save_path:
+        with open(save_path, "w") as f:
+            f.write(notation)

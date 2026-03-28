@@ -8,9 +8,10 @@ from pathlib import Path
 from mgr.db import get_conn, set_message, set_status
 from mgr.exec import CppExecutor, ExecutionError, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT, Subm, wrap_err
-from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError, POKER_TESTS
+from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError, POKER_TESTS, AgarioCode, FakeAgario, AGARIO_TESTS
 from mgr.sims.prison import simulate as simulate_prison
 from mgr.sims.simPoker import simulate as simulate_poker
+from mgr.sims.agario import simulate as simulate_agario
 
 logger = logging.getLogger("MGR")
 
@@ -53,6 +54,21 @@ def run_simulator(
 
                 try:
                     simulate_poker(players, money=test, match_id=1)
+                except TestError as e:
+                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
+                    raise
+
+                stop_exc()
+        case 3:
+            for j in range(3):
+                start_exc()
+
+                players = [AgarioCode("A", exc, trace=True)] + [FakeAgario() for _ in range(5)]
+                shuffle(players)
+                pidx = next(i for i, p in enumerate(players) if type(p) is AgarioCode)
+
+                try:
+                    simulate_agario(players)
                 except TestError as e:
                     format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
                     raise
