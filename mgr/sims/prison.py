@@ -43,15 +43,15 @@ def generate_notation(
 
 
 GAINS = {
-    (None, None): (0, 0),
-    (None, PrisonMove.COOPERATE): (0, 10),
-    (None, PrisonMove.BETRAY): (0, 10),
-    (PrisonMove.COOPERATE, None): (10, 0),
-    (PrisonMove.BETRAY, None): (10, 0),
-    (PrisonMove.COOPERATE, PrisonMove.COOPERATE): (1, 1),
-    (PrisonMove.BETRAY, PrisonMove.BETRAY): (5, 5),
-    (PrisonMove.BETRAY, PrisonMove.COOPERATE): (10, 0),
-    (PrisonMove.COOPERATE, PrisonMove.BETRAY): (0, 10),
+    (None, None): (10, 10),
+    (None, PrisonMove.COOPERATE): (10, 0),
+    (None, PrisonMove.BETRAY): (10, 0),
+    (PrisonMove.COOPERATE, None): (0, 10),
+    (PrisonMove.BETRAY, None): (0, 10),
+    (PrisonMove.COOPERATE, PrisonMove.COOPERATE): (4, 4),
+    (PrisonMove.BETRAY, PrisonMove.BETRAY): (8, 8),
+    (PrisonMove.BETRAY, PrisonMove.COOPERATE): (0, 10),
+    (PrisonMove.COOPERATE, PrisonMove.BETRAY): (10, 0),
 }
 
 
