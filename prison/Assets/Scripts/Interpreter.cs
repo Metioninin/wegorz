@@ -22,8 +22,8 @@ public class Interpreter : MonoBehaviour
     public Game gameManager;
     public float refreshRate = 1;
     bool isGameStarted = false;
-    Tasiemiec dataLong;
     int currentGame = 0;
+    Tasiemiec dataLong;
     [SerializeField] AudioSource src;
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
 
@@ -62,8 +62,25 @@ public class Interpreter : MonoBehaviour
 
     public void StartGame()
     {
-        if (currentGame == dataLong.data.Count || dataLong == null) return;
+        if (currentGame == dataLong.data.Count || dataLong == null)
+        {
+            PrintStat("greet");
+            PrintStat("fight");
+            PrintStat("diff");
+            PrintStat("2greet");
+            PrintStat("2betray");
+            PrintStat("error");
+            return;
+        }
+
         StartCoroutine(gameManager.StartGame(dataLong.data[currentGame]));
         currentGame++;
+    }
+
+    void PrintStat(string name)
+    {
+        if (!PlayerPrefs.HasKey(name)) name += " 0";
+        else name += " " + PlayerPrefs.GetInt(name).ToString();
+        Debug.Log(name);
     }
 }

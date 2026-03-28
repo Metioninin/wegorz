@@ -26,11 +26,22 @@ def generate_notation(
     gain2: float,
     ranking: Ranking,
 ) -> str:
+    
+    realMove1 = 0
+    realMove2 = 0
+    if move1 == PrisonMove.BETRAY:
+        realMove1 = 1
+    elif move1 == None:
+        realMove1 = 2
+    if move2 == PrisonMove.BETRAY:
+        realMove2 = 1
+    elif move2 == None:
+        realMove2 = 2
     notation_data = {
         "name1": name1,
         "name2": name2,
-        "move1": move1,
-        "move2": move2,
+        "move1": realMove1,
+        "move2": realMove2,
         "gain1": gain1,
         "gain2": gain2,
         "ranking": [],
