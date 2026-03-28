@@ -38,7 +38,7 @@ def run_simulator(
             start_exc()
             
             try:
-                simulate_prison(players=(Prisoner("0", exc), FakePrisoner()), match_id=1)
+                simulate_prison(players=(Prisoner("0", exc), FakePrisoner()))
             except TestError as e:
                 format_test_err(e, nr=1, cnt=1)
                 raise
@@ -53,7 +53,7 @@ def run_simulator(
                 pidx = next(i for i, p in enumerate(players) if type(p) is PokerCode)
 
                 try:
-                    simulate_poker(players, money=test, match_id=1)
+                    simulate_poker(players, money=test)
                 except TestError as e:
                     format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
                     raise
