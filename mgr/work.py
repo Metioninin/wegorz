@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+from random import shuffle
 import tempfile
 import traceback
 from pathlib import Path
@@ -29,7 +30,6 @@ def run_simulator(
         e.args = (f"Test {nr}/{cnt}:\n{e.args[0]}",) + e.args[1:]
 
         if test:
-            test = wrap_err(test)
             e.args = (f"{e.args[0]}\n\nKomunikacja:\n{test}",) + e.args[1:]
         
     match round_id:
@@ -46,12 +46,15 @@ def run_simulator(
         case 2:
             for idx, test in enumerate(POKER_TESTS, start=1):
                 start_exc()
+
                 players = [PokerCode("0", exc, trace=True)] + [FakePoker() for _ in range(5)]
+                shuffle(players)
+                pidx = next(i for i, p in enumerate(players) if type(p) is PokerCode)
 
                 try:
                     simulate_poker(players, money=test, match_id=1)
                 except TestError as e:
-                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[0]._comm))
+                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
                     raise
 
                 stop_exc()

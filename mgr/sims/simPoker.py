@@ -408,10 +408,6 @@ def simulate(
 
     test_mode = save_path is None
 
-    # give start info to players
-    for player in players:
-        player.send_start_info(len(players))
-
     # create dummy ranking for solution testing
     if ranking is None:
         assert test_mode

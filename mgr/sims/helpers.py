@@ -109,11 +109,14 @@ class PlayerInfo:
 
     def gen_lines(self) -> list[str]:
         return [
-            f"{self.stawka} {self.pula}",
+            f"{self.twojIndex}",
             " ".join(str(h) for h in self.hajs),
             " ".join(str(s) for s in self.stawki),
+            f"{self.stawka}",
+            f"{self.pula}",
             " ".join(str(c) for c in self.ownCards),
-            " ".join([str(len(self.mutualCards))] + [str(c) for c in self.mutualCards]),
+            f"{len(self.mutualCards)}",
+            " ".join([str(c) for c in self.mutualCards]),
         ]
 
 
@@ -124,21 +127,13 @@ class PokerCode:
     trace: bool = False
     _comm: list[str] = field(default_factory=list)
 
-    def send_start_info(self, players_count: int) -> None:
-        assert self.exc
-        msg = f"{players_count}"
-        self.exc.send_line(msg)
-
-        if self.trace:
-            self._comm.append(msg)
-
     def _get_move(self, ctx: PlayerInfo, raise_errors: bool) -> tuple[str, int] | None:
         if self.exc is None:
             return None
 
         for line in ctx.gen_lines():
             self.exc.send_line(line)
-            
+
             if self.trace:
                 self._comm.append(line)
 
