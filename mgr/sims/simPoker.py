@@ -399,7 +399,6 @@ def _simulate(
 
 def simulate(
     players: list[PokerCode],
-    match_id: int,
     save_path: Path | None = None,
     ranking: Ranking | None = None,
     money: Sequence[int] | None = None,
@@ -418,5 +417,5 @@ def simulate(
     notation = _simulate(players, ranking, raise_errors=test_mode)
 
     if save_path:
-        with open(save_path / f"{match_id}", "w") as f:
+        with open(save_path, "w") as f:
             f.write(notation)
