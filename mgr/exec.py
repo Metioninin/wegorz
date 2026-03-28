@@ -137,7 +137,6 @@ class BaseExecutor:
                     raise ExecutionError(f"Runtime error\n{stderr}")
 
         assert len(l_word) == 1
-        print("mam slowko!", l_word)
         return l_word[0]
 
     def exit(self) -> None:

@@ -7,7 +7,7 @@ from pathlib import Path
 from mgr.db import get_conn, set_message, set_status
 from mgr.exec import CppExecutor, ExecutionError, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT, Subm
-from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError
+from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError, POKER_TESTS
 from mgr.sims.prison import simulate as simulate_prison
 from mgr.sims.simPoker import simulate as simulate_poker
 
@@ -25,15 +25,32 @@ def run_simulator(
     def stop_exc():
         exc.exit()
 
+    def format_test_err(e: TestError, nr: int, cnt: int):
+        e.args = (f"Test {nr}/{cnt}:\n{e.args[0]}",) + e.args[1:]
+        
     match round_id:
         case 1:
             start_exc()
-            simulate_prison(players=(Prisoner("0", exc), FakePrisoner()), match_id=1)
+            
+            try:
+                simulate_prison(players=(Prisoner("0", exc), FakePrisoner()), match_id=1)
+            except TestError as e:
+                format_test_err(e, nr=1, cnt=1)
+                raise
+
             stop_exc()
         case 2:
-            start_exc()
-            simulate_poker(players=[PokerCode("0", exc), FakePoker()], match_id=1)
-            stop_exc()
+            for idx, test in enumerate(POKER_TESTS, start=1):
+                start_exc()
+
+                try:
+                    players = [PokerCode("0", exc)] + [FakePoker() for _ in range(5)]
+                    simulate_poker(players, money=test, match_id=1)
+                except TestError as e:
+                    format_test_err(e, idx, len(POKER_TESTS))
+                    raise
+
+                stop_exc()
         case _:
             raise NotImplementedError()
 

@@ -73,9 +73,7 @@ class Prisoner:
         self.exc = None
 
         if raise_errors:
-            raise TestError(
-                f"Niepoprawny ruch: {wrap_err(out)}"
-            )
+            raise TestError(f"Niepoprawny ruch: {wrap_err(out)}")
         return None
 
 
@@ -149,18 +147,25 @@ class PokerCode:
             self.exc = None
 
             if raise_errors:
-                raise TestError(f"Niepoprawny ruch: {first_part}")
+                raise TestError(f"Niepoprawny ruch: {wrap_err(first_part)}")
             return None
 
         try:
             second_part = self.exc.read_string()
         except ExecutionError as e:
             if raise_errors:
-                raise TestError(f"Got {wrap_err(first_part)}, but after that error happend\n{e}")
+                raise TestError(
+                    f"Got {wrap_err(first_part)}, but after that error happend\n{e}"
+                )
             return None
 
-        if first_part + second_part == "All In":
-            return (first_part + second_part, 0)
+        if first_part == "All":
+            comb = first_part + ' ' + second_part
+            if second_part == "In":
+                return (comb, 0)
+            raise TestError(
+                f"Oczekiwano 'All In', otrzymano: {wrap_err(comb)}"
+            )
 
         try:
             val = int(second_part)
@@ -170,7 +175,7 @@ class PokerCode:
             self.exc = None
 
             if raise_errors:
-                raise TestError(f"Niepoprawny wartość raise: {second_part}")
+                raise TestError(f"Niepoprawny wartość raise: {wrap_err(second_part)}")
             return None
         return (first_part, val)
 
@@ -183,19 +188,28 @@ class FakePoker(PokerCode):
         pass
 
     def get_move(self, ctx: PlayerInfo, *args, **kwargs) -> tuple[str, int] | None:
-        moves = [("Fold",0)]
+        moves = [("Fold", 0)]
         i = ctx.twojIndex
 
         if ctx.hajs[i]:
-            moves.append(("All In",0))
+            moves.append(("All In", 0))
 
         if ctx.stawka - ctx.stawki[i] <= ctx.hajs[i]:
-            moves.append(("Call",0))
+            moves.append(("Call", 0))
 
             if ctx.hajs[i] + ctx.stawki[i] >= ctx.stawka:
-                moves.append(("Raise", randint(ctx.stawka, ctx.hajs[i] + ctx.stawki[i])))
+                moves.append(
+                    ("Raise", randint(ctx.stawka, ctx.hajs[i] + ctx.stawki[i]))
+                )
 
         if ctx.stawki[i] == ctx.stawka:
-            moves.append(("Check",0))
+            moves.append(("Check", 0))
 
         return choice(moves)
+
+# poczatkowe sumy graczy (powinny sumowac sie do 6*1000)
+POKER_TESTS = (
+    (1000, 1000, 1000, 1000, 1000, 1000),
+    (100, 1000, 250, 1000, 50, 3600),
+    (0, 125, 50, 1000, 3000, 1825)
+)
