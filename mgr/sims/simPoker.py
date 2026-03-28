@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 import random
 from collections import Counter
 from dataclasses import dataclass
@@ -399,10 +397,9 @@ def simulate(
     players: list[PokerCode],
     ranking: Ranking | None = None,
     money: Sequence[int] | None = None,
-) -> None:
+    test_mode: bool = True
+) -> dict:
     "If save_path not proviede then it can raise TestError"
-
-    test_mode = save_path is None
 
     # create dummy ranking for solution testing
     if ranking is None:

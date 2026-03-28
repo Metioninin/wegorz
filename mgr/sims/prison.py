@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 from mgr.sims.helpers import PrisonMove, Prisoner
 
 Ranking = list[tuple[str, float]]
@@ -25,17 +22,17 @@ def generate_notation(
     gain1: float,
     gain2: float,
     ranking: Ranking,
-) -> str:
+) -> dict:
     
     realMove1 = 0
     realMove2 = 0
     if move1 == PrisonMove.BETRAY:
         realMove1 = 1
-    elif move1 == None:
+    elif move1 is None:
         realMove1 = 2
     if move2 == PrisonMove.BETRAY:
         realMove2 = 1
-    elif move2 == None:
+    elif move2 is None:
         realMove2 = 2
     notation_data = {
         "name1": name1,
@@ -70,7 +67,7 @@ def _simulate(
     players: tuple[Prisoner, Prisoner],
     ranking: list[tuple[str, float]],
     test_mode: bool,
-) -> str:
+) -> dict:
     move1 = players[0].get_move(raise_errors=test_mode)
     move2 = players[1].get_move(raise_errors=test_mode)
 
@@ -91,11 +88,10 @@ def _simulate(
 
 def simulate(
     players: tuple[Prisoner, Prisoner],
-    ranking: Ranking | None = None
-) -> None:
+    ranking: Ranking | None = None,
+    test_mode: bool = True
+) -> dict:
     "If save_path not proviede then it can raise TestError"
-
-    test_mode=save_path is None
 
     # give start info to players
     for player_id in range(2):

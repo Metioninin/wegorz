@@ -83,10 +83,9 @@ def create_executor(
 
 def run_match(
     rnd: int,
-    save_path: Path,
     ranking: Any,
     execs: list[tuple[str, PythonExecutor | CppExecutor]],
-) -> None:
+) -> dict:
     assert len(execs) > 0
 
     def get_botname() -> Generator[str, None, None]:
@@ -102,7 +101,7 @@ def run_match(
         case 1:
             assert len(execs) == 2
             players = (Prisoner(*execs[0]), Prisoner(*execs[1]))
-            return simulate_prison(players, ranking)
+            return simulate_prison(players, ranking, test_mode=False)
         case 2:
             assert len(execs) <= 6
 
@@ -113,7 +112,7 @@ def run_match(
 
             shuffle(players)
 
-            return simulate_poker(players, ranking)
+            return simulate_poker(players, ranking, test_mode=False)
         case 3:
             assert len(execs) <= 6
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
             exc.setup_sandbox(Path(exc_path.name))
             exc.run()
 
-        data.append(run_match(rnd, save_path, ranking, execs))
+        data.append(run_match(rnd, ranking, execs))
 
         for exc in execs:
             exc[1].exit()
