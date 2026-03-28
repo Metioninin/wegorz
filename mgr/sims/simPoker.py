@@ -279,6 +279,9 @@ def _simulate(playerCodes: list[PokerCode], ranking: list[tuple[str, int]], rais
                         raise TestError("Robisz raise a nie masz tyle hajsu")
                     winner = PlayerFold(i, folded,  stawki)
                     move[0] = "Error"
+                elif move[1] - stawki[i] == hajs[i]:
+                    pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
+                    move[0] = "All In"
                 else:
                     hajs[i] -= move[1] - stawki[i]
                     pula += move[1] - stawki[i]
