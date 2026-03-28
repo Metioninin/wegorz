@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 import tempfile
+import traceback
 from pathlib import Path
 
 from mgr.db import get_conn, set_message, set_status
@@ -55,7 +56,7 @@ def work(subm: Subm):
                         logger.error(f"During compilation of {subm.id} got error:\n{e}")
                     else:
                         set_message(subm.id, str(e), conn)
-                        
+
                     return
             else:
                 with open(exc_path, "w") as f:
@@ -63,8 +64,16 @@ def work(subm: Subm):
 
             set_status(subm.id, "testowanie", conn)
 
-            kwargs = {"box_id": box_id, "timeout": EXC_TIMEOUT, "mem_limit": EXC_MEM_LIMIT}
-            exc = CppExecutor(**kwargs) if subm.lang == "CPP" else PythonExecutor(**kwargs)
+            kwargs = {
+                "box_id": box_id,
+                "timeout": EXC_TIMEOUT,
+                "mem_limit": EXC_MEM_LIMIT,
+            }
+            exc = (
+                CppExecutor(**kwargs)
+                if subm.lang == "CPP"
+                else PythonExecutor(**kwargs)
+            )
 
             try:
                 run_simulator(subm.round_id, exc, exc_path)
@@ -74,7 +83,10 @@ def work(subm: Subm):
                 if isinstance(e, TestError):
                     set_message(subm.id, str(e), conn)
                 else:
-                    logger.error(f"Testing failed for submission {subm.id}.\n{e}")
+                    logger.error(
+                        f"Testing failed for submission {subm.id}.\n"
+                        + f"{str(traceback.format_exc())}"
+                    )
                     set_message(subm.id, "Błąd serwera :)", conn)
             else:
                 set_status(subm.id, "ok", conn)
