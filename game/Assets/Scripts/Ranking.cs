@@ -38,6 +38,7 @@ public class Ranking : MonoBehaviour
             a.transform.SetParent(mover);
             a.transform.localPosition = currPos;
             currPos.y -= dist;
+            ranking.Add(a);
         }
 
         startScrollingPos = Vector2.zero;

@@ -26,6 +26,7 @@ public class Interpreter : MonoBehaviour
     Tasiemiec dataLong;
     [SerializeField] AudioSource src;
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
+    public string path = "C:/Users/Admin/Desktop/notki";
 
     private void Start()
     {
@@ -38,7 +39,7 @@ public class Interpreter : MonoBehaviour
         {
             yield return new WaitForSeconds(refreshRate);
             if (isGameStarted) continue;
-            DirectoryInfo dir = new DirectoryInfo(Application.persistentDataPath);
+            DirectoryInfo dir = new DirectoryInfo(path);
             FileInfo[] files = dir.GetFiles();
 
             if (files.Length == 0) continue;

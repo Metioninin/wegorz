@@ -134,9 +134,11 @@ public class Interpreter : MonoBehaviour
     [SerializeField] AudioSource src;
 
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
+    public static string path = "C:/Users/Admin/Desktop/notki";
 
     private void Start()
     {
+        Debug.Log(path);
         speed = speed2 / 1000f;
         speedLabel.text = speed2.ToString();
         StartCoroutine(SlowerUpdate());
@@ -148,7 +150,7 @@ public class Interpreter : MonoBehaviour
         {
             yield return new WaitForSeconds(refreshRate);
             if (isGameStarted) continue;
-            DirectoryInfo dir = new DirectoryInfo(Application.persistentDataPath);
+            DirectoryInfo dir = new DirectoryInfo(path);
             FileInfo[] files = dir.GetFiles();
 
             if (files.Length == 0) continue;
@@ -164,7 +166,6 @@ public class Interpreter : MonoBehaviour
             }
 
             dataLong = Tasiemiec.Read(file);
-            file.Delete();
             break;
         }
     }
@@ -188,9 +189,9 @@ public class Interpreter : MonoBehaviour
         else
         {
             for (int i = 0; i < 2; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, n, 1), 0, speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, n, 1), 0, 1000 * speed, true));
             for (int i = 2; i < 4; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, 1000 * speed, true));
         }
 
         for (int i = 0; i < 2; i++)
@@ -223,7 +224,7 @@ public class Interpreter : MonoBehaviour
                 item.obj.localScale = Vector3.Lerp(item.startPos, item.endPos, item.progress);
             else
                 item.obj.position = Vector3.Lerp(item.startPos, item.endPos, item.progress);
-            item.progress += item.speed;
+            item.progress += item.speed * Time.deltaTime;
         }
 
         for(int i = 0; i < 2; i++)
@@ -244,9 +245,9 @@ public class Interpreter : MonoBehaviour
             }
             else
             {
-                animations.Add(new Anim(players[j].transform, players[j].transform.position, WorldPos((data.framesTop[currentFrame].moves[j] + data.framesBottom[currentFrame].moves[j]) / 2), 0, speed, false));
+                animations.Add(new Anim(players[j].transform, players[j].transform.position, WorldPos((data.framesTop[currentFrame].moves[j] + data.framesBottom[currentFrame].moves[j]) / 2), 0, 1000 * speed, false));
                 float wielBoku = data.framesBottom[currentFrame].moves[j].x - data.framesTop[currentFrame].moves[j].x;
-                animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2f * speed, true));
+                animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2000 * speed, true));
             }
         }
         SetZone(data.zone[currentFrame] * kratka, false);
@@ -273,6 +274,7 @@ public class Interpreter : MonoBehaviour
         zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
         for (int i = 0; i < playerCount; i++)
         {
+            Debug.Log(WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2) + " " + ((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2).x + " " + ((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2).y);
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
             System.Random random = new System.Random();
             Color color = new Color((float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, 1);
@@ -286,7 +288,7 @@ public class Interpreter : MonoBehaviour
 
     IEnumerator EndGame()
     {
-        yield return new WaitForSeconds(1 / speed2);
+        yield return new WaitForSeconds(1 / speed2 * 2);
 
         src.PlayOneShot(winSfx);
         winnerArea.SetActive(true);
