@@ -87,7 +87,7 @@ def run_simulator(
 
             msg = [
                 f"Brak błędów na {TEST_CNT} testach z losowymi botami.",
-                f"Zakończyłeś gry następująco jako: {", ".join(poses)} w kolejności gracz."
+                f"Zakończono gry jako następująco: {", ".join(poses)} gracz w kolejności zjedzeń (6 oznacza że gracz przeżył do końca)."
             ]
 
             return "\n".join(msg)
