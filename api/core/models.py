@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Literal, Self
-from pydantic import AwareDatetime, BaseModel, Field, model_validator
+from typing import Literal
+from pydantic import AwareDatetime, BaseModel, Field
 
 
 class User(BaseModel):
@@ -18,14 +18,6 @@ class ChangePassword(BaseModel):
     current_password: str = Field(max_length=72)
     new_password: str = Field(min_length=8, max_length=72)
     confirm_password: str = Field(min_length=8, max_length=72)
-
-    @model_validator(mode="after")
-    def validate_passwords(self) -> Self:
-        if self.current_password == self.new_password:
-            raise ValueError("New password must be different from current one.")
-        if self.new_password != self.confirm_password:
-            raise ValueError("New and confirm passwords must be equal")
-        return self
 
 
 class Submission(BaseModel):
