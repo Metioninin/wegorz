@@ -279,6 +279,5 @@ def simulate(
 ) -> dict:
     if ranking is None:
         assert test_mode
-        random.seed(2137)
         ranking = [(p.username, 0) for p in players]
     return _simulate(players, ranking, raise_errors=test_mode)

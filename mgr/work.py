@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 from random import shuffle
+import random
 import tempfile
 import traceback
 from pathlib import Path
@@ -60,6 +61,7 @@ def run_simulator(
 
                 stop_exc()
         case 2:
+            random.seed(2137)
             poses = []
             # NOTE: running multiple tests is impossible for the same box_id (EOF)
             TEST_CNT = 2
