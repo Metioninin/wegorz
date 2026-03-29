@@ -44,7 +44,7 @@ def run_simulator(
                 raise
 
             stop_exc()
-        case 2:
+        case 3:
             for idx, test in enumerate(POKER_TESTS, start=1):
                 start_exc()
 
@@ -59,7 +59,7 @@ def run_simulator(
                     raise
 
                 stop_exc()
-        case 3:
+        case 2:
             poses = []
             # NOTE: running multiple tests is impossible for the same box_id (EOF)
             TEST_CNT = 1

@@ -102,7 +102,7 @@ def run_match(
             assert len(execs) == 2
             players = (Prisoner(*execs[0]), Prisoner(*execs[1]))
             return simulate_prison(players, ranking, test_mode=False)
-        case 2:
+        case 3:
             assert len(execs) <= 6
 
             players = [PokerCode(login, exc) for login, exc in execs]
@@ -113,7 +113,7 @@ def run_match(
             shuffle(players)
 
             return simulate_poker(players, ranking, test_mode=False)
-        case 3:
+        case 2:
             assert len(execs) <= 6
 
             players = [AgarioCode(login, exc) for login, exc in execs]
