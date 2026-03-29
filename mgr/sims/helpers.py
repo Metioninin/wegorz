@@ -18,8 +18,18 @@ class Pair:
 
     def __str__(self) -> str:
         return str(self.x) + " " + str(self.y)
+
     def __add__(self, other):
         return Pair(self.x + other.x, self.y + other.y)
+
+
+LAZY_CONV = {
+    "LEFT": Pair(-1, 0),
+    "RIGHT": Pair(1, 0),
+    "UP": Pair(0, 1),
+    "DOWN": Pair(0, -1),
+    "NO_MOVE": Pair(0, 0),
+}
 
 
 class AgarioMove(Enum):
@@ -121,6 +131,7 @@ class PlayerInfo:
             " ".join([str(c) for c in self.mutualCards]),
         ]
 
+
 @dataclass
 class PokerCode:
     username: str
@@ -173,7 +184,7 @@ class PokerCode:
         try:
             val = int(second_part)
             assert val > 0
-        except:
+        except Exception:
             self.exc.exit()
             self.exc = None
 
@@ -186,7 +197,7 @@ class PokerCode:
         move = self._get_move(ctx, raise_errors)
 
         if self.trace and move:
-            str_move = move[0] + ' ' + str(move[1]) if move[0] == "Raise" else move[0]
+            str_move = move[0] + " " + str(move[1]) if move[0] == "Raise" else move[0]
             self._comm.append(str_move)
 
         return move
@@ -218,7 +229,8 @@ class FakePoker(PokerCode):
             moves.append(("Check", 0))
 
         return choice(moves)
-    
+
+
 @dataclass
 class PlayerInfoAgario:
     n: int
@@ -228,19 +240,32 @@ class PlayerInfoAgario:
     bot: list[Pair]
 
     def gen_lines(self) -> list[str]:
-        linie = [str(self.n), str(self.m), str(self.zone)]
-        for t, b in zip(self.top, self.bot):
+        # TODO: tresc
+        linie = [
+            " ".join([str(self.n), str(self.m), str(self.zone), str(len(self.top))])
+        ]
+        for t, b in zip(self.top, self.bot, strict=True):
             linie.append(str(t) + " " + str(b))
 
         return linie
 
+
+class AgarionKill(Exception):
+    pass
+
+
+@dataclass
 class AgarioCode:
     username: str
     exc: BaseExecutor | None  # NOTE: must be started before
+
+    top: Pair = field(default_factory=Pair)
+    bot: Pair = field(default_factory=Pair)
+
     trace: bool = False
     _comm: list[str] = field(default_factory=list)
 
-    def _get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> tuple[str, int] | None:
+    def _get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> str | None:
         if self.exc is None:
             return None
 
@@ -266,21 +291,29 @@ class AgarioCode:
             if raise_errors:
                 raise TestError(f"Niepoprawny ruch: {wrap_err(first_part)}")
             return None
-        
-    def get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> tuple[str, int] | None:
+
+    def get_move(self, ctx: PlayerInfoAgario, raise_errors: bool) -> str | None:
         move = self._get_move(ctx, raise_errors)
         return move
-    
+
+    def kill(self, place: int, raise_errors: bool) -> None:
+        if raise_errors:
+            raise AgarionKill(place)
+
+
 class FakeAgario(AgarioCode):
-    def __init__(self):
-        super().__init__(username="A", exc=None)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, username="A", exc=None, **kwargs)
 
     def send_start_info(self, *args, **kwargs) -> None:
         pass
 
-    def get_move(self, ctx: PlayerInfoAgario, *args, **kwargs) -> tuple[str, int] | None:
+    def get_move(self, ctx: PlayerInfoAgario, *args, **kwargs) -> str | None:
         moves = ["LEFT", "RIGHT", "UP", "DOWN", "NO_MOVE"]
         return choice(moves)
+
+    def kill(self, *args, **kwargs) -> None:
+        pass
 
 
 class FoldPoker(PokerCode):

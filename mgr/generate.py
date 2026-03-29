@@ -118,7 +118,10 @@ def run_match(
 
             players = [AgarioCode(login, exc) for login, exc in execs]
             shuffle(players)
-            return simulate_agario(players, ranking)
+
+            return simulate_agario(players, ranking, test_mode=False)
+        case _:
+            raise Exception("pojebalo cie")
 
 
 if __name__ == "__main__":
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     assert matches
 
     Path("/matches").mkdir(exist_ok=True)
-    save_path = Path(f"/matches/match.json")
+    save_path = Path("/matches/match.json")
     data = []
     for midx, match in enumerate(matches):
         execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
