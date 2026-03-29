@@ -8,7 +8,7 @@ from pathlib import Path
 from mgr.db import get_conn, set_message, set_status
 from mgr.exec import CppExecutor, ExecutionError, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT, Subm
-from mgr.sims.helpers import FakePoker, FakePrisoner, PokerCode, Prisoner, TestError, POKER_TESTS, AgarioCode, FakeAgario
+from mgr.sims.helpers import AgarionKill, FakePoker, FakePrisoner, PokerCode, Prisoner, TestError, POKER_TESTS, AgarioCode, FakeAgario
 from mgr.sims.prison import simulate as simulate_prison
 from mgr.sims.simPoker import simulate as simulate_poker
 from mgr.sims.agario import simulate as simulate_agario
@@ -18,7 +18,7 @@ logger = logging.getLogger("MGR")
 
 def run_simulator(
     round_id: int, exc: CppExecutor | PythonExecutor, exc_path: Path
-) -> None:
+) -> str | None:
     def start_exc():
         exc.start_isolation()
         exc.setup_sandbox(exc_path)
@@ -60,20 +60,37 @@ def run_simulator(
 
                 stop_exc()
         case 3:
-            for j in range(3):
+            poses = []
+            # NOTE: running multiple tests is impossible for the same box_id (EOF)
+            TEST_CNT = 1
+
+            for idx in range(TEST_CNT):
                 start_exc()
 
                 players = [AgarioCode("A", exc, trace=True)] + [FakeAgario() for _ in range(5)]
                 shuffle(players)
                 pidx = next(i for i, p in enumerate(players) if type(p) is AgarioCode)
+                player_obj = players[pidx]
+
+                pos = len(players) # default
 
                 try:
                     simulate_agario(players)
+                except AgarionKill as e:
+                    pos = e.args[0]
                 except TestError as e:
-                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
+                    format_test_err(e, idx, TEST_CNT, test="\n".join(player_obj._comm))
                     raise
-
+            
+                poses.append(str(pos))
                 stop_exc()
+
+            msg = [
+                "Brak błędów.",
+                f"Zakończono grę z losowymi botami na pozycji {poses[0]}."
+            ]
+
+            return "\n".join(msg)
         case _:
             raise NotImplementedError()
 
@@ -114,9 +131,10 @@ def work(subm: Subm):
                 if subm.lang == "CPP"
                 else PythonExecutor(**kwargs)
             )
+            out = None
 
             try:
-                run_simulator(subm.round_id, exc, exc_path)
+                out = run_simulator(subm.round_id, exc, exc_path)
             except Exception as e:
                 set_status(subm.id, "błąd testowania", conn)
 
@@ -130,6 +148,7 @@ def work(subm: Subm):
                     set_message(subm.id, "Błąd serwera :)", conn)
             else:
                 set_status(subm.id, "ok", conn)
-                set_message(subm.id, "Pomyślnie ukończono testy", conn)
+                out = out if out else "Pomyślnie ukończono testy"
+                set_message(subm.id, out, conn)
             finally:
                 exc.exit()

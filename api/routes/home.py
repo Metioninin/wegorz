@@ -156,6 +156,22 @@ async def post_change_password(
     if user_info is None:
         return gen_logout_redirect()
 
+    if data.current_password == data.new_password:
+        return await gen_change_pass_template(
+            request,
+            conn,
+            status_code=401,
+            error="Nowe hasło musi róźnić się od obecnego.",
+        )
+
+    if data.new_password != data.confirm_password:
+        return await gen_change_pass_template(
+            request,
+            conn,
+            status_code=401,
+            error="Nowe hasło i potwierdź hasło muszą być takie same.",
+        )
+
     if not await is_password_valid(conn, user_info.login, data.current_password):
         return await gen_change_pass_template(
             request, conn, status_code=401, error="Niepoprawne hasło."
@@ -209,5 +225,5 @@ async def statement(
 
     if not os.path.exists(filename):
         raise HTTPException(404)
-        
+
     return FileResponse(filename)
