@@ -58,8 +58,7 @@ class BaseExecutor:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self._sandbox_dir,
-            bufsize=0,
-            text=True,
+            bufsize=0
         )
         self._running = True
 
@@ -69,7 +68,7 @@ class BaseExecutor:
         assert self._running, "not running"
 
         try:
-            self._proc.stdin.write(line + "\n")
+            self._proc.stdin.write((line + "\n").encode("utf-8"))
             self._proc.stdin.flush()
         except BrokenPipeError:
             pass
@@ -89,6 +88,7 @@ class BaseExecutor:
 
                 word = ""
                 word_started: bool = False
+                raw = b""
 
                 while True:
                     char = os.read(stdout.fileno(), 1)
@@ -101,8 +101,14 @@ class BaseExecutor:
                             break
                         else:
                             continue
+                    raw += char
 
-                    word += char.decode()
+                    try:
+                        word += raw.decode("utf-8")
+                        raw = b""
+                    except UnicodeDecodeError:
+                        continue
+
                     word_started = True
 
                     if len(word) > EXC_OUT_LIMIT:
