@@ -71,6 +71,8 @@ public class Interpreter : MonoBehaviour
             PrintStat("2greet");
             PrintStat("2betray");
             PrintStat("error");
+            PrintStat("greetOcc");
+            PrintStat("fightOcc");
             return;
         }
 

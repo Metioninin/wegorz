@@ -91,6 +91,11 @@ public class Game : MonoBehaviour
             if (data.move1 != data.move2) UpdateStats("diff", 1);
             else if (data.move2 == data.move1 && data.move1 == 1) UpdateStats("2betray", 1);
             else UpdateStats("2greet", 1);
+
+            if (data.move1 == 0) UpdateStats("greetOcc", 1);
+            else UpdateStats("fightOcc", 1);
+            if (data.move2 == 0) UpdateStats("greetOcc", 1);
+            else UpdateStats("fightOcc", 1);
         }
 
         yield return new WaitForSeconds(1);
