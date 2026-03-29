@@ -62,7 +62,7 @@ def run_simulator(
         case 2:
             poses = []
             # NOTE: running multiple tests is impossible for the same box_id (EOF)
-            TEST_CNT = 1
+            TEST_CNT = 2
 
             for idx in range(TEST_CNT):
                 start_exc()
@@ -86,8 +86,8 @@ def run_simulator(
                 stop_exc()
 
             msg = [
-                "Brak błędów.",
-                f"Zakończono grę z losowymi botami na pozycji {poses[0]}."
+                f"Brak błędów na {TEST_CNT} testach z losowymi botami.",
+                f"Zakończyłeś gry następująco jako: {", ".join(poses)} w kolejności gracz."
             ]
 
             return "\n".join(msg)
