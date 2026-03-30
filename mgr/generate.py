@@ -184,17 +184,17 @@ if __name__ == "__main__":
         flush=True,
     )
 
-    rnd = 0  # TODO:
+    rnd = 2
     assert rnd
 
-    group_cnt = 0  # TODO:
+    group_cnt = 1
     assert group_cnt
 
     groups = gen_groups(get_logins(rnd), group_cnt)
     data = []
 
     for gidx, group in enumerate(groups, start=1):
-        times = 0 # TODO:
+        times = 3
         assert times
 
         matches: list[list[str]] = gen_matches(group, times)
