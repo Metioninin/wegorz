@@ -266,7 +266,8 @@ def _simulate(
 
         zoneNotation.append(zone)
 
-    playerNamesNotation.append((players[0].username, 1 + len(playerNamesNotation)))
+    if len(players):
+        playerNamesNotation.append((players[0].username, 1 + len(playerNamesNotation)))
     playerNamesNotation.reverse()
 
     playerNamesNotationReal = []
