@@ -73,15 +73,15 @@ def dfs(
 
 def calc_ranking(
     curr_ranking: list[tuple[str, int]],
-    results: list[str],
+    results: list[tuple[str, int]],
     overwrite: list[tuple[str, int]],
 ) -> Ranking:
     for i in range(len(results)):
         for j in range(len(curr_ranking)):
             if curr_ranking[j][0] == results[i]:
                 name, score = curr_ranking[j]
-                points = (len(results) - i) * POINTS_MULT
-                overwrite.append((results[i], points))
+                points = results[i][1] * POINTS_MULT
+                overwrite.append((results[i][0], points))
                 curr_ranking[j] = (name, score + points)
                 break
 
@@ -96,7 +96,7 @@ def _simulate(
     visited_indeces = []
 
     # notation variables
-    playerNamesNotation = []  # w kolejnosci rankingu
+    playerNamesNotation: list[tuple[str, int]] = []  # w kolejnosci rankingu
     framesTopNotation = []
     framesBottomNotation = []
     zoneNotation = []
@@ -123,6 +123,8 @@ def _simulate(
     zone = 0
 
     while players_count > 1:  # dopoki zyje co najmniej 2
+        place = 1 + len(playerNamesNotation)
+
         # zapisuje aktualna pozycje
         framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
         framesBottomNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
@@ -156,10 +158,19 @@ def _simulate(
             others_t[0], others_t[i] = others_t[i], others_t[0]
             others_b[0], others_b[i] = others_b[i], others_b[0]
 
-        for i in range(players_count):
+        i = 0
+        while i < players_count:
+            if newMoves[i] is None:
+                playerNamesNotation.append((players[i].username, place))
+                players.pop(i)
+                newMoves.pop(i)
+                players_count -= 1
+                continue
+
             # rekonstrukcja ruchow i aktualizacja pozycji
             players[i].top += LAZY_CONV[newMoves[i]]
             players[i].bot += LAZY_CONV[newMoves[i]]
+            i += 1
 
         odw = [False] * players_count
         newPositions = [0] * players_count
@@ -199,7 +210,7 @@ def _simulate(
         while i < players_count:  # realizacja zwiekszania/usuwania
             while newPositions[i] == -1:
                 newPositions.pop(i)
-                playerNamesNotation.append(players[i].username)
+                playerNamesNotation.append((players[i].username, place))
                 players_count -= 1
                 dead = players.pop(i)
                 dead.kill(len(playerNamesNotation), raise_errors)
@@ -232,7 +243,7 @@ def _simulate(
             ):
                 players[i].bot += Pair(-1, 1)
                 if players[i].top == players[i].bot:
-                    playerNamesNotation.append(players[i].username)
+                    playerNamesNotation.append((players[i].username, place))
                     players_count -= 1
                     dead = players.pop(i)
                     dead.kill(len(playerNamesNotation), raise_errors)
@@ -255,7 +266,7 @@ def _simulate(
 
         zoneNotation.append(zone)
 
-    playerNamesNotation.append(players[0].username)
+    playerNamesNotation.append((players[0].username, 1 + len(playerNamesNotation)))
     playerNamesNotation.reverse()
 
     playerNamesNotationReal = []
