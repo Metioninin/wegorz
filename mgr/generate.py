@@ -12,7 +12,7 @@ from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT
 
 from mgr.sims.helpers import FoldPoker, PokerCode, Prisoner, AgarioCode
 from mgr.sims.prison import simulate as simulate_prison
-from mgr.sims.simPoker import simulate as simulate_poker
+from mgr.sims.simPoker import PlayerFold, simulate as simulate_poker
 from mgr.sims.agario import simulate as simulate_agario
 
 
@@ -48,7 +48,7 @@ def get_subm(login: str, rnd: int) -> Code:
                 END,
                 s.send_at DESC
             """,
-            (login,rnd),
+            (login, rnd),
         )
         res = cur.fetchone()
 
@@ -124,41 +124,97 @@ def run_match(
             raise Exception("pojebalo cie")
 
 
+def get_logins(rid: int) -> list[str]:
+    conn = get_conn()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT DISTINCT u.login
+            FROM submissions s
+            JOIN users u ON u.id = s.user_id
+            WHERE 
+                s.round_id = %s 
+                AND s.status IN ('ok', 'błąd testowania')
+            ORDER BY u.login
+            """,
+            (rid,),
+        )
+        res = cur.fetchall()
+
+    return [row[0] for row in res]
+
+
+def gen_groups(players: list[str], group_cnt: int) -> list[list[str]]:
+    shuffle(players)
+
+    base_size = (len(players) + group_cnt - 1) // group_cnt
+
+    groups: list[list[str]] = []
+
+    for i in range(base_size):
+        pl_len = len(players)
+        start = i * pl_len
+        end = start + pl_len
+        groups.append(players[start:end])
+
+    return groups
+
+
+def gen_matches(group: list[str], times: int) -> list[list[str]]:
+    return [group for _ in range(times)]
+
+
 if __name__ == "__main__":
     print("KURWA! UPEWNIJ SIE ZE NIE ROBISZ TEGO W VPSie!", flush=True)
     print(
-        "POBIERZ DB ZE VPSA (czyli caly folder .db-data) i odpal wegorza u siebie!",
+        "PG_DUMPUJE BASE Z VPSA, napraw i odpal wegorza u siebie!",
         flush=True,
     )
 
-    rnd = -1  # TODO:
-    assert rnd != -1
+    rnd = 0  # TODO:
+    assert rnd
 
-    matches: list[list[str]] = []  # TODO: loginy ludzi
-    ranking = []  # TODO: set depending on game
-    assert matches
+    group_cnt = 0  # TODO:
+    assert group_cnt
 
-    Path("/matches").mkdir(exist_ok=True)
-    save_path = Path("/matches/match.json")
-    data = []
-    for midx, match in enumerate(matches):
-        execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
+    groups = gen_groups(get_logins(rnd), group_cnt)
 
-        for idx, player in enumerate(match):
-            subm = get_subm(player, rnd)
-            exc_path, exc = create_executor(box_id=idx, code=subm.code, lang=subm.lang)
+    for idx, group in enumerate(groups, start=1):
+        times = 0 # TODO:
+        assert times
 
-            execs.append((player, exc))
-
-            exc.start_isolation()
-            exc.setup_sandbox(Path(exc_path.name))
-            exc.run()
-
-        data.append(run_match(rnd, ranking, execs))
-
-        for exc in execs:
-            exc[1].exit()
+        matches: list[list[str]] = gen_matches(group, times)
+        assert matches
         
-    final = {"data": data}
-    tasiemiec = json.dumps(final, indent=4, ensure_ascii=False)
-    save_path.write_text(tasiemiec, encoding='utf-8')
+        ranking = [(p, 0) for p in group]
+
+        match_path = Path("/matches")
+        match_path.mkdir(exist_ok=True)
+
+        save_path = match_path / "match-{}.json".format(idx)
+
+        data = []
+
+        for midx, match in enumerate(matches):
+            execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
+
+            for idx, player in enumerate(match):
+                subm = get_subm(player, rnd)
+                exc_path, exc = create_executor(
+                    box_id=idx, code=subm.code, lang=subm.lang
+                )
+
+                execs.append((player, exc))
+
+                exc.start_isolation()
+                exc.setup_sandbox(Path(exc_path.name))
+                exc.run()
+
+            data.append(run_match(rnd, ranking, execs))
+
+            for exc in execs:
+                exc[1].exit()
+
+        tasiemiec = json.dumps({"data": data}, indent=4, ensure_ascii=False)
+        save_path.write_text(tasiemiec, encoding="utf-8")
