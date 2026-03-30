@@ -8,7 +8,7 @@ Ranking = list[tuple[str, int]]
 
 def generate_notation(
     k: int,
-    playerNames: list[list[str]],
+    playerNames: list[str],
     framesTop: list,
     framesBottom: list,
     zone: list,
@@ -90,7 +90,7 @@ def _simulate(
 
     # notation variables
     deadNotation: list[tuple[str, int]] = []  # w kolejnosci rankingu
-    playerNames: list[list[str]] = []
+    playerNames: list[str] = [p.username for p in players]
 
     framesTopNotation: list[list[Pair]] = []
     framesBottomNotation: list[list[Pair]] = []
@@ -250,7 +250,7 @@ def _simulate(
 
         framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
         framesBottomNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
-        
+
         for i in range(players_count):
             framesTopNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
                 players[i].top.x, players[i].top.y
@@ -260,7 +260,6 @@ def _simulate(
             )
 
         zoneNotation.append(zone)
-        playerNames.append([p.username for p in players])
 
     if len(players):
         deadNotation.append((players[0].username, 1 + len(deadNotation)))
