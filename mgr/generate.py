@@ -85,6 +85,7 @@ def run_match(
     rnd: int,
     ranking: Any,
     execs: list[tuple[str, PythonExecutor | CppExecutor]],
+    group_id: int,
 ) -> dict:
     assert len(execs) > 0
 
@@ -112,14 +113,20 @@ def run_match(
 
             shuffle(players)
 
-            return simulate_poker(players, ranking, test_mode=False)
+            res = simulate_poker(players, ranking, test_mode=False)
+            res["group"] = str(group_id)
+            
+            return res
         case 2:
             assert len(execs) <= 6
 
             players = [AgarioCode(login, exc) for login, exc in execs]
             shuffle(players)
 
-            return simulate_agario(players, ranking, test_mode=False)
+            res = simulate_agario(players, ranking, test_mode=False)
+            res["group"] = str(group_id)
+
+            return res
         case _:
             raise Exception("pojebalo cie")
 
@@ -145,14 +152,19 @@ def get_logins(rid: int) -> list[str]:
     return [row[0] for row in res]
 
 
+def ceil_div(x, y):
+    return (x + y - 1) // y
+
+
 def gen_groups(players: list[str], group_cnt: int) -> list[list[str]]:
     shuffle(players)
 
-    base_size = (len(players) + group_cnt - 1) // group_cnt
+    base_size = ceil_div(len(players), group_cnt)
+    groups_cnt = ceil_div(len(players), base_size)
 
     groups: list[list[str]] = []
 
-    for i in range(base_size):
+    for i in range(groups_cnt):
         pl_len = len(players)
         start = i * pl_len
         end = start + pl_len
@@ -179,8 +191,9 @@ if __name__ == "__main__":
     assert group_cnt
 
     groups = gen_groups(get_logins(rnd), group_cnt)
+    data = []
 
-    for idx, group in enumerate(groups, start=1):
+    for gidx, group in enumerate(groups, start=1):
         times = 0 # TODO:
         assert times
 
@@ -188,13 +201,6 @@ if __name__ == "__main__":
         assert matches
         
         ranking = [(p, 0) for p in group]
-
-        match_path = Path("/matches")
-        match_path.mkdir(exist_ok=True)
-
-        save_path = match_path / "match-{}.json".format(idx)
-
-        data = []
 
         for midx, match in enumerate(matches):
             execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
@@ -211,10 +217,14 @@ if __name__ == "__main__":
                 exc.setup_sandbox(Path(exc_path.name))
                 exc.run()
 
-            data.append(run_match(rnd, ranking, execs))
+            data.append(run_match(rnd, ranking, execs, gidx))
 
             for exc in execs:
                 exc[1].exit()
 
-        tasiemiec = json.dumps({"data": data}, indent=4, ensure_ascii=False)
-        save_path.write_text(tasiemiec, encoding="utf-8")
+    match_path = Path("/matches")
+    match_path.mkdir(exist_ok=True)
+    save_path = match_path / "match.json"
+
+    tasiemiec = json.dumps({"data": data}, indent=4, ensure_ascii=False)
+    save_path.write_text(tasiemiec, encoding="utf-8")
