@@ -46,6 +46,7 @@ def run_simulator(
 
             stop_exc()
         case 3:
+            random.seed(2137)
             for idx, test in enumerate(POKER_TESTS, start=1):
                 start_exc()
 
