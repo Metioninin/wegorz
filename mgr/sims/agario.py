@@ -32,9 +32,7 @@ def generate_notation(
         notation_data["framesBottom"].append({"moves": moves})
 
     for name, score in ranking:
-        notation_data["ranking"].append(
-            {"order": {"name": name, "points": float(score)}}
-        )
+        notation_data["ranking"].append({"name": name, "points": float(score)})
 
     return notation_data
 
