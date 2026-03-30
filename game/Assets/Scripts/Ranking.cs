@@ -17,15 +17,16 @@ public class Ranking : MonoBehaviour
     public float waitTime = 0.5f;
     public float masksDistance;
     public int startIndex = 0;
-    public TextMeshProUGUI waiting, desired;
+    public TextMeshProUGUI waiting, desired, groupText;
 
     List<GameObject> ranking = new List<GameObject>();
-    public void SetRanking(List<Order> names)
+    public void SetRanking(List<Order> names, int group)
     {
         foreach(var item in ranking) 
             Destroy(item); 
         ranking.Clear();
 
+        groupText.text = "Grupa: " + group.ToString();
         currPos = startPos;
         for (int i = startIndex; i < names.Count; i++)
         {

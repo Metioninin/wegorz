@@ -82,6 +82,7 @@ public class Anim
     public List<Moves> framesBottom;
     public List<int> zone;
     public List<Order> ranking;
+    public int group;
     public Notation(){}
 
 
@@ -136,10 +137,15 @@ public class Interpreter : MonoBehaviour
     [SerializeField] AudioClip popSfx, winSfx, startGameSfx;
     public static string path = "C:/Users/Admin/Desktop/notki";
 
+    int dlugoscZyc, iloscSmierci, damage, jednostki, afk, posCount;
+    float xSum, ySum;
+    List<string> playerNamesSet;
+    public GameObject dymek;
+
     private void Start()
     {
         Debug.Log(path);
-        speed = speed2 / 1000f;
+        speed = speed2 / 1000f; 
         speedLabel.text = speed2.ToString();
         StartCoroutine(SlowerUpdate());
     }
@@ -206,10 +212,10 @@ public class Interpreter : MonoBehaviour
         foreach (var anim in animations)
             if (anim.progress < 1)
                 going = true;
-        if(!going)
+        if (!going)
         {
             animations.Clear();
-            if(currentFrame == data.framesBottom.Count)
+            if (currentFrame == data.framesBottom.Count)
             {
                 StartCoroutine(EndGame());
                 return;
@@ -218,7 +224,7 @@ public class Interpreter : MonoBehaviour
         }
 
 
-        foreach(var item in animations)
+        foreach (var item in animations)
         {
             if (item.scale)
                 item.obj.localScale = Vector3.Lerp(item.startPos, item.endPos, item.progress);
@@ -227,9 +233,9 @@ public class Interpreter : MonoBehaviour
             item.progress += item.speed * Time.deltaTime;
         }
 
-        for(int i = 0; i < 2; i++)
+        for (int i = 0; i < 2; i++)
             zoneMasks[i].localScale = new Vector2(zoneMasks[i].localScale.x, n - 2 * zoneMasks[i].localScale.x);
-        
+
     }
 
     void NextFrame()
@@ -241,23 +247,41 @@ public class Interpreter : MonoBehaviour
             if (data.framesTop[currentFrame].moves[j].x == -1)
             {
                 didDie = true;
+                var x = Instantiate(dymek, players[j].transform.position, Quaternion.identity);
+                x.transform.localPosition = players[j].transform.localPosition;
                 players[j].SetActive(false);
+                dlugoscZyc += currentFrame;
+                iloscSmierci += 1;
+                float poprzWielBoku = data.framesBottom[currentFrame - 1].moves[j].x - data.framesTop[currentFrame - 1].moves[j].x;
+                damage += (int)poprzWielBoku * (int)poprzWielBoku;
             }
             else
             {
                 animations.Add(new Anim(players[j].transform, players[j].transform.position, WorldPos((data.framesTop[currentFrame].moves[j] + data.framesBottom[currentFrame].moves[j]) / 2), 0, 1000 * speed, false));
                 float wielBoku = data.framesBottom[currentFrame].moves[j].x - data.framesTop[currentFrame].moves[j].x;
                 animations.Add(new Anim(players[j].transform, players[j].transform.localScale, new Vector3(kratka * wielBoku, kratka * wielBoku, 0), 0, 2000 * speed, true));
+
+                if (data.framesTop[currentFrame].moves[j] != data.framesTop[currentFrame - 1].moves[j]) jednostki++;
+                else afk++;
+                float poprzWielBoku = data.framesBottom[currentFrame - 1].moves[j].x - data.framesTop[currentFrame - 1].moves[j].x;
+                if (wielBoku < poprzWielBoku) damage += (int)poprzWielBoku * (int)poprzWielBoku - (int)wielBoku * (int)wielBoku;
+                xSum += (data.framesTop[currentFrame].moves[j].x + data.framesBottom[currentFrame].moves[j].x) / 2;
+                ySum += (data.framesTop[currentFrame].moves[j].y + data.framesBottom[currentFrame].moves[j].y) / 2;
+                posCount++;
             }
         }
         SetZone(data.zone[currentFrame] * kratka, false);
-        if(didDie) src.PlayOneShot(popSfx);
+        if (didDie) src.PlayOneShot(popSfx);
         currentFrame++;
     }
 
     public void StartGame()
     {
-        if (currentGame == dataLong.data.Count) return;
+        if (currentGame == dataLong.data.Count)
+        {
+            PrintStats();
+            return;
+        }
         src.PlayOneShot(startGameSfx);
         data = dataLong.data[currentGame++];
         ranking.gameObject.SetActive(false);
@@ -274,7 +298,12 @@ public class Interpreter : MonoBehaviour
         zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
         for (int i = 0; i < playerCount; i++)
         {
-            Debug.Log(WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2) + " " + ((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2).x + " " + ((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2).y);
+            bool czy = true;
+            foreach (var name in playerNamesSet)
+                if (name == data.playerNames[i].name)
+                    czy = false;
+            if (czy)
+                playerNamesSet.Add(data.playerNames[i].name);
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
             System.Random random = new System.Random();
             Color color = new Color((float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, 1);
@@ -293,12 +322,12 @@ public class Interpreter : MonoBehaviour
         src.PlayOneShot(winSfx);
         winnerArea.SetActive(true);
         winnerText.text = data.playerNames[0].name;
-        winnerArea.GetComponent<Ranking>().SetRanking(data.playerNames);
+        winnerArea.GetComponent<Ranking>().SetRanking(data.playerNames, data.group);
         yield return new WaitForSeconds(5 / speed2);
         winnerArea.SetActive(false);
 
         ranking.gameObject.SetActive(true);
-        ranking.SetRanking(data.ranking);
+        ranking.SetRanking(data.ranking, data.group);
         isGameStarted = false;
     }
 
@@ -308,7 +337,7 @@ public class Interpreter : MonoBehaviour
             Destroy(item);
         grid.Clear();
         float x = WorldPos(new pair(1, 0)).x;
-        while(x < m / 2)
+        while (x < m / 2)
         {
             var obj = Instantiate(gridObject, new Vector2(x, 0), Quaternion.identity);
             obj.transform.localScale = new Vector2(kratka * gridThickness, n);
@@ -316,7 +345,7 @@ public class Interpreter : MonoBehaviour
             x += kratka;
         }
         float y = WorldPos(new pair(0, 1)).y;
-        while(y < n / 2)
+        while (y < n / 2)
         {
             var obj = Instantiate(gridObject, new Vector2(0, y), Quaternion.identity);
             obj.transform.localScale = new Vector2(m, kratka * gridThickness);
@@ -342,5 +371,15 @@ public class Interpreter : MonoBehaviour
     public bool IsGamePlaying()
     {
         return isGameStarted;
+    }
+
+    void PrintStats()
+    {
+        Debug.Log("przebyte jednostki: " + (jednostki).ToString());
+        Debug.Log("sredni zywot klocka: " + ((float)dlugoscZyc / iloscSmierci).ToString());
+        Debug.Log("zadany damage: " + damage.ToString());
+        Debug.Log("suma afk: " + afk.ToString());
+        Debug.Log("srednia pozycja: " + (xSum / posCount).ToString() + " " + (ySum / posCount).ToString());
+        Debug.Log("ilosc graczy: " + playerNamesSet.Count.ToString());
     }
 }
