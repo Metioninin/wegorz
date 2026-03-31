@@ -263,8 +263,8 @@ def _simulate(
                 if players[i].top == players[i].bot:
                     deadNotation.append((players[i].username, place))
                     players.pop(i).kill(len(deadNotation), raise_errors)
-                else:
-                    i += 1
+                    i -= 1
+            i += 1
 
     # add last frame
     add_frame()
