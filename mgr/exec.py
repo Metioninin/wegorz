@@ -29,11 +29,7 @@ class BaseExecutor:
 
     def start_isolation(self) -> None:
         assert self._sandbox_dir is None
-        subprocess.run(
-            args=["isolate", f"--box-id={self.box_id}", "--cleanup"],
-            timeout=self.exit_timeout,
-            check=True,
-        )
+        self.exit()
         result = subprocess.run(
             args=["isolate", f"--box-id={self.box_id}", "--init"],
             capture_output=True,
@@ -71,6 +67,7 @@ class BaseExecutor:
             self._proc.stdin.write((line + "\n").encode("utf-8"))
             self._proc.stdin.flush()
         except BrokenPipeError:
+            assert self._proc.stderr
             pass
 
     def read_string(self) -> str:
@@ -183,6 +180,14 @@ class CppExecutor(BaseExecutor):
 
 
 class PythonExecutor(BaseExecutor):
+    def start_isolation(self) -> None:
+        subprocess.run(
+            ["fuser", "-k", "/opt/python-standalone/bin/python"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return super().start_isolation()
+
     def setup_sandbox(self, code_path: Path) -> None:
         assert self._sandbox_dir
         copyfile(code_path, self._sandbox_dir / "exec")
@@ -190,6 +195,8 @@ class PythonExecutor(BaseExecutor):
 
     def run(self) -> None:
         python_path = Path("/opt") / "python-standalone"
+
+
         return super().run(
             dirs=[str(python_path)],
             cmd=[str(python_path / "bin" / "python"), "exec"],

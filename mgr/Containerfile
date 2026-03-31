@@ -3,7 +3,7 @@ FROM python:3.14
 RUN echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/isolate.asc] http://www.ucw.cz/isolate/debian/ bookworm-isolate main" \
     > /etc/apt/sources.list.d/isolate.list
 RUN curl https://www.ucw.cz/isolate/debian/signing-key.asc >/etc/apt/keyrings/isolate.asc
-RUN apt update && apt install isolate
+RUN apt update && apt install isolate psmics
 
 ADD https://github.com/astral-sh/python-build-standalone/releases/download/20260310/cpython-3.14.3+20260310-x86_64-unknown-linux-gnu-install_only.tar.gz /tmp/python.tar.gz
 RUN mkdir -p /opt/python-standalone && \
