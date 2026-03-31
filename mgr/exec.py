@@ -137,7 +137,7 @@ class BaseExecutor:
                 case None:
                     raise ExecutionError("Time limit exceeded for anwser")
                 case 0:
-                    raise ExecutionError("Expected output, but got EOF")
+                    raise ExecutionError("Runtime error or output ended unexpectedly")
                 case _:
                     if self._proc.stderr:
                         stderr = self._proc.stderr.read(EXC_OUT_LIMIT)
