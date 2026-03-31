@@ -126,9 +126,9 @@ class PlayerInfo:
             " ".join(str(s) for s in self.stawki),
             f"{self.stawka}",
             f"{self.pula}",
-            " ".join(str(c) for c in self.ownCards),
+            *(str(c) for c in self.ownCards),
             f"{len(self.mutualCards)}",
-            " ".join([str(c) for c in self.mutualCards]),
+            *([str(c) for c in self.mutualCards]),
         ]
 
 
