@@ -125,7 +125,7 @@ def run_match(
             players = [AgarioCode(login, exc) for login, exc in execs]
 
             while len(players) < 6:
-                players.append(FakeAgario(next(gen), None))
+                players.append(FakeAgario(username=next(gen), exc=None))
 
             shuffle(players)
 
