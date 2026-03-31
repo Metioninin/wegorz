@@ -109,56 +109,58 @@ def _simulate(
     zoneNotation: list[int] = []
     rankingNotation: Ranking = []
 
-    players_count = len(players)
+    players_count = lambda: len(players)
 
     k = math.ceil(
-        math.sqrt(players_count / (ST_A * ST_B * DENSITY))
+        math.sqrt(players_count() / (ST_A * ST_B * DENSITY))
     )  # 6k^2(ilosc pol[n*m])=ilosc_graczy/denisty
     n = ST_A * k
     m = ST_B * k
 
     initialIndex = {}
-    initialPlayerCount = players_count
+    initialPlayerCount = players_count()
 
-    pposes = moja_pierwsza_funkcja(players_count, n, m)
+    pposes = moja_pierwsza_funkcja(players_count(), n, m)
 
     # poczatkowe rozstawienie graczy na mapie
-    for i, pp in zip(range(players_count), pposes, strict=True):
+    for i, pp in zip(range(players_count()), pposes, strict=True):
         players[i].top = Pair(pp[0], pp[1])
         players[i].bot = players[i].top + Pair(1, -1)
         initialIndex[players[i].username] = i
 
     zoneFrequency = 10
-    zoneCurr = 0
     zone = 0
 
-    while players_count > 1:  # dopoki zyje co najmniej 2
-        place = 1 + len(deadNotation)
-
-        # zapisuje aktualna pozycje
+    def add_frame():
         framesTopNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
         framesBottomNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
 
-        for i in range(players_count):
-            framesTopNotation[zoneCurr][initialIndex[players[i].username]] = (
+        for i in range(players_count()):
+            framesTopNotation[-1][initialIndex[players[i].username]] = (
                 players[i].top.x,
                 players[i].top.y,
             )
-            framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = (
+            framesBottomNotation[-1][initialIndex[players[i].username]] = (
                 players[i].bot.x,
                 players[i].bot.y,
             )
         zoneNotation.append(zone)
 
+    # add start frame
+    add_frame()
+
+    while players_count() > 1:  # dopoki zyje co najmniej 2
+        place = 1 + len(deadNotation)
+
         # listy pozycji wszystkich graczy (przed ruchami)
         others_t = []
         others_b = []
-        for i in range(players_count):
+        for i in range(players_count()):
             others_t.append(players[i].top)
             others_b.append(players[i].bot)
 
         newMoves = []
-        for i in range(players_count):
+        for i in range(players_count()):
             # i-ty gracz musi byc pierwszy
             others_t[0], others_t[i] = others_t[i], others_t[0]
             others_b[0], others_b[i] = others_b[i], others_b[0]
@@ -171,12 +173,11 @@ def _simulate(
             others_b[0], others_b[i] = others_b[i], others_b[0]
 
         i = 0
-        while i < players_count:
+        while i < players_count():
             if newMoves[i] is None:
                 deadNotation.append((players[i].username, place))
                 players.pop(i)
                 newMoves.pop(i)
-                players_count -= 1
                 continue
 
             # rekonstrukcja ruchow i aktualizacja pozycji
@@ -184,10 +185,14 @@ def _simulate(
             players[i].bot += LAZY_CONV[newMoves[i]]
             i += 1
 
-        odw = [False] * players_count
-        newPositions = [0] * players_count
+        # zapisuje aktualna pozycje
+        add_frame()
 
-        for i in range(players_count):
+        odw = [False] * players_count()
+        newPositions = [0] * players_count()
+
+        # sprawdzenie konfliktów
+        for i in range(players_count()):
             if not odw[i]:
                 visited_indeces = []
                 dfs(players, visited_indeces, odw, i)
@@ -220,33 +225,33 @@ def _simulate(
                         break
 
         i = 0
-        while i < players_count:  # realizacja zwiekszania/usuwania
+        while i < players_count():  # realizacja zwiekszania/usuwania
             while newPositions[i] == -1:
                 newPositions.pop(i)
                 deadNotation.append((players[i].username, place))
-                players_count -= 1
                 players.pop(i).kill(len(deadNotation), raise_errors)
 
-                if i >= players_count:
+                if i >= players_count():
                     break
-            if i >= players_count:
+            if i >= players_count():
                 break
+
             if newPositions[i] == 0:
                 i += 1
                 continue
+
             players[i].bot = Pair(
                 players[i].top.x + newPositions[i], players[i].top.y - newPositions[i]
             )
             i += 1
 
         # co iles klatek zone sie zmniejsza
-        zoneCurr += 1
-        if zoneCurr % zoneFrequency == 0:
+        if len(zoneNotation) % zoneFrequency == 0:
             zone += 1
 
         # gdy gracz w strefie odejmij mu miejsce i jak jest za maly to go usun
         i = 0
-        while i < players_count:
+        while i < players_count():
             if (
                 players[i].top.x < zone
                 or players[i].top.y > n - zone
@@ -257,24 +262,11 @@ def _simulate(
 
                 if players[i].top == players[i].bot:
                     deadNotation.append((players[i].username, place))
-                    players_count -= 1
                     players.pop(i).kill(len(deadNotation), raise_errors)
             i += 1
 
     # add last frame
-    framesTopNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
-    framesBottomNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
-
-    for i in range(players_count):
-        framesTopNotation[zoneCurr][initialIndex[players[i].username]] = (
-            players[i].top.x,
-            players[i].top.y,
-        )
-        framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = (
-            players[i].bot.x,
-            players[i].bot.y,
-        )
-    zoneNotation.append(zone)
+    add_frame()
 
     if len(players):
         deadNotation.append((players[0].username, 1 + len(deadNotation)))
@@ -298,6 +290,7 @@ def _simulate(
 def simulate(
     players: list[AgarioCode], ranking: Ranking | None = None, test_mode: bool = True
 ) -> dict:
+    random.seed(1)
     if ranking is None:
         assert test_mode
         ranking = [(p.username, 0) for p in players]
