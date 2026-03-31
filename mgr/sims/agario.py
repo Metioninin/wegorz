@@ -290,7 +290,6 @@ def _simulate(
 def simulate(
     players: list[AgarioCode], ranking: Ranking | None = None, test_mode: bool = True
 ) -> dict:
-    random.seed(1)
     if ranking is None:
         assert test_mode
         ranking = [(p.username, 0) for p in players]
