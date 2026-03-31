@@ -71,7 +71,7 @@ def calc_ranking(
 ) -> Ranking:
     for i in range(len(results)):
         for j in range(len(curr_ranking)):
-            if curr_ranking[j][0] == results[i]:
+            if curr_ranking[j][0] == results[i][0]:
                 name, score = curr_ranking[j]
                 points = results[i][1] * POINTS_MULT
                 curr_ranking[j] = (name, score + points)
