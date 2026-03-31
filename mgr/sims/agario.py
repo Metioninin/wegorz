@@ -116,6 +116,7 @@ def _simulate(
     )  # 6k^2(ilosc pol[n*m])=ilosc_graczy/denisty
     n = ST_A * k
     m = ST_B * k
+    print(n, m)
 
     initialIndex = {}
     initialPlayerCount = players_count()
@@ -175,6 +176,7 @@ def _simulate(
         i = 0
         while i < players_count():
             if newMoves[i] is None:
+                print("crash", players[i].username, flush=True)
                 deadNotation.append((players[i].username, place))
                 players.pop(i)
                 newMoves.pop(i)
@@ -227,6 +229,7 @@ def _simulate(
         i = 0
         while i < players_count():  # realizacja zwiekszania/usuwania
             while newPositions[i] == -1:
+                print("killed by sm", players[i].username, flush=True)
                 newPositions.pop(i)
                 deadNotation.append((players[i].username, place))
                 players.pop(i).kill(len(deadNotation), raise_errors)
@@ -245,10 +248,6 @@ def _simulate(
             )
             i += 1
 
-        # co iles klatek zone sie zmniejsza
-        if len(zoneNotation) % zoneFrequency == 0:
-            zone += 1
-
         # gdy gracz w strefie odejmij mu miejsce i jak jest za maly to go usun
         i = 0
         while i < players_count():
@@ -261,10 +260,15 @@ def _simulate(
                 players[i].bot += Pair(-1, 1)
 
                 if players[i].top == players[i].bot:
+                    print("killed by strefa", players[i].username, flush=True)
                     deadNotation.append((players[i].username, place))
                     players.pop(i).kill(len(deadNotation), raise_errors)
                     i -= 1
             i += 1
+
+        # co iles klatek zone sie zmniejsza
+        if len(zoneNotation) % zoneFrequency == 0:
+            zone += 1
 
     # add last frame
     add_frame()
