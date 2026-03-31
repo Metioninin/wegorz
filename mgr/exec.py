@@ -145,7 +145,7 @@ class BaseExecutor:
         assert len(l_word) == 1
         
         if l_word[0] == "":
-            raise ExecutionError("Expected output, but got EOF")
+            raise ExecutionError("Runtime error or output ended unexpectedly")
         return l_word[0]
 
     def exit(self) -> None:
