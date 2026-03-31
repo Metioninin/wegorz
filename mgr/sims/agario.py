@@ -132,8 +132,8 @@ def _simulate(
     zone = 0
 
     def add_frame():
-        framesTopNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
-        framesBottomNotation.append([(-1, -1) for _ in range(initialPlayerCount)])
+        framesTopNotation.append([(-1000000, -1000000) for _ in range(initialPlayerCount)])
+        framesBottomNotation.append([(-1000000, -1000000) for _ in range(initialPlayerCount)])
 
         for i in range(players_count()):
             framesTopNotation[-1][initialIndex[players[i].username]] = (
