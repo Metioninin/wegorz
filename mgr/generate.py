@@ -10,9 +10,9 @@ from mgr.db import get_conn
 from mgr.exec import CppExecutor, PythonExecutor, compile_cpp
 from mgr.helpers import EXC_MEM_LIMIT, EXC_TIMEOUT
 
-from mgr.sims.helpers import FoldPoker, PokerCode, Prisoner, AgarioCode
+from mgr.sims.helpers import FakeAgario, FoldPoker, PokerCode, Prisoner, AgarioCode
 from mgr.sims.prison import simulate as simulate_prison
-from mgr.sims.simPoker import PlayerFold, simulate as simulate_poker
+from mgr.sims.simPoker import simulate as simulate_poker
 from mgr.sims.agario import simulate as simulate_agario
 
 
@@ -104,6 +104,7 @@ def run_match(
             players = (Prisoner(*execs[0]), Prisoner(*execs[1]))
             return simulate_prison(players, ranking, test_mode=False)
         case 3:
+            assert len(execs)
             assert len(execs) <= 6
 
             players = [PokerCode(login, exc) for login, exc in execs]
@@ -118,9 +119,14 @@ def run_match(
             
             return res
         case 2:
+            assert len(execs)
             assert len(execs) <= 6
 
             players = [AgarioCode(login, exc) for login, exc in execs]
+
+            while len(players) < 6:
+                players.append(FakeAgario(username=next(gen), exc=None))
+
             shuffle(players)
 
             res = simulate_agario(players, ranking, test_mode=False)

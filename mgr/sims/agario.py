@@ -1,45 +1,39 @@
 import math
 import random
 
-from mgr.sims.helpers import LAZY_CONV, AgarioCode, AgarioMove, Pair, PlayerInfoAgario
+from mgr.sims.helpers import LAZY_CONV, AgarioCode, Pair, PlayerInfoAgario
 
 Ranking = list[tuple[str, int]]
+FramePos = list[list[tuple[int, int]]]
 
 
 def generate_notation(
     k: int,
     playerNames: list[str],
-    framesTop: list,
-    framesBottom: list,
-    zone: list,
+    framesTop: FramePos,
+    framesBottom: FramePos,
+    zone: list[int],
     ranking: Ranking,
 ) -> dict:
     notation_data = {
         "k": k,
-        "playerNames": [],
+        "playerNames": playerNames,
         "framesTop": [],
         "framesBottom": [],
         "zone": zone,
         "ranking": [],
     }
 
-    for name, score in playerNames:
-        notation_data["playerNames"].append(
-            {"order": {"name": name, "points": float(score)}}
-        )
-
     for frame in framesTop:
-        moves = [{"x": float(p.x), "y": float(p.y)} for p in frame]
+        moves = [{"x": float(p[0]), "y": float(p[1])} for p in frame]
         notation_data["framesTop"].append({"moves": moves})
 
     for frame in framesBottom:
-        moves = [{"x": float(p.x), "y": float(p.y)} for p in frame]
+        moves = [{"x": float(p[0]), "y": float(p[1])} for p in frame]
         notation_data["framesBottom"].append({"moves": moves})
 
     for name, score in ranking:
-        notation_data["ranking"].append(
-            {"order": {"name": name, "points": float(score)}}
-        )
+        notation_data["ranking"].append({"name": name, "points": float(score)})
 
     return notation_data
 
@@ -74,19 +68,29 @@ def dfs(
 def calc_ranking(
     curr_ranking: list[tuple[str, int]],
     results: list[tuple[str, int]],
-    overwrite: list[tuple[str, int]],
 ) -> Ranking:
     for i in range(len(results)):
         for j in range(len(curr_ranking)):
-            if curr_ranking[j][0] == results[i]:
+            if curr_ranking[j][0] == results[i][0]:
                 name, score = curr_ranking[j]
                 points = results[i][1] * POINTS_MULT
-                overwrite.append((results[i][0], points))
                 curr_ranking[j] = (name, score + points)
                 break
 
     curr_ranking.sort(key=lambda x: x[1], reverse=True)
     return curr_ranking
+
+
+def moja_pierwsza_funkcja(pls: int, n: int, m: int) -> list[tuple[int, int]]:
+    s: set[tuple[int, int]] = set()
+
+    while len(s) != pls:
+        s.add((random.randint(0, m - 1), random.randint(1, n)))
+
+    d = list(s)
+    random.shuffle(d)
+
+    return d
 
 
 def _simulate(
@@ -96,57 +100,68 @@ def _simulate(
     visited_indeces = []
 
     # notation variables
-    playerNamesNotation: list[tuple[str, int]] = []  # w kolejnosci rankingu
-    framesTopNotation = []
-    framesBottomNotation = []
-    zoneNotation = []
-    rankingNotation = []
+    deadNotation: list[tuple[str, int]] = []  # w kolejnosci rankingu
+    playerNames: list[str] = [p.username for p in players]
 
-    players_count = len(players)
+    framesTopNotation: FramePos = []
+    framesBottomNotation: FramePos = []
+
+    zoneNotation: list[int] = []
+    rankingNotation: Ranking = []
+
+    players_count = lambda: len(players)
 
     k = math.ceil(
-        math.sqrt(players_count / (ST_A * ST_B * DENSITY))
+        math.sqrt(players_count() / (ST_A * ST_B * DENSITY))
     )  # 6k^2(ilosc pol[n*m])=ilosc_graczy/denisty
     n = ST_A * k
     m = ST_B * k
+    print(n, m)
 
     initialIndex = {}
-    initialPlayerCount = players_count
+    initialPlayerCount = players_count()
 
-    for i in range(players_count):  # poczatkowe rozstawienie graczy na mapie
-        players[i].top = Pair(random.randint(0, m - 1), random.randint(1, n))
+    pposes = moja_pierwsza_funkcja(players_count(), n, m)
+
+    # poczatkowe rozstawienie graczy na mapie
+    for i, pp in zip(range(players_count()), pposes, strict=True):
+        players[i].top = Pair(pp[0], pp[1])
         players[i].bot = players[i].top + Pair(1, -1)
         initialIndex[players[i].username] = i
 
     zoneFrequency = 10
-    zoneCurr = 0
     zone = 0
 
-    while players_count > 1:  # dopoki zyje co najmniej 2
-        place = 1 + len(playerNamesNotation)
+    def add_frame():
+        framesTopNotation.append([(-1000000, -1000000) for _ in range(initialPlayerCount)])
+        framesBottomNotation.append([(-1000000, -1000000) for _ in range(initialPlayerCount)])
 
-        # zapisuje aktualna pozycje
-        framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
-        framesBottomNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
-
-        for i in range(players_count):
-            framesTopNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].top.x, players[i].top.y
+        for i in range(players_count()):
+            framesTopNotation[-1][initialIndex[players[i].username]] = (
+                players[i].top.x,
+                players[i].top.y,
             )
-            framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].bot.x, players[i].bot.y
+            framesBottomNotation[-1][initialIndex[players[i].username]] = (
+                players[i].bot.x,
+                players[i].bot.y,
             )
         zoneNotation.append(zone)
+
+    # add start frame
+    add_frame()
+
+    while players_count() > 1:  # dopoki zyje co najmniej 2
+        place = 1 + len(deadNotation)
 
         # listy pozycji wszystkich graczy (przed ruchami)
         others_t = []
         others_b = []
-        for i in range(players_count):
+        for i in range(players_count()):
             others_t.append(players[i].top)
             others_b.append(players[i].bot)
 
         newMoves = []
-        for i in range(players_count):
+        for i in range(players_count()):
             # i-ty gracz musi byc pierwszy
             others_t[0], others_t[i] = others_t[i], others_t[0]
             others_b[0], others_b[i] = others_b[i], others_b[0]
@@ -159,12 +174,12 @@ def _simulate(
             others_b[0], others_b[i] = others_b[i], others_b[0]
 
         i = 0
-        while i < players_count:
+        while i < players_count():
             if newMoves[i] is None:
-                playerNamesNotation.append((players[i].username, place))
+                print("crash", players[i].username, flush=True)
+                deadNotation.append((players[i].username, place))
                 players.pop(i)
                 newMoves.pop(i)
-                players_count -= 1
                 continue
 
             # rekonstrukcja ruchow i aktualizacja pozycji
@@ -172,10 +187,14 @@ def _simulate(
             players[i].bot += LAZY_CONV[newMoves[i]]
             i += 1
 
-        odw = [False] * players_count
-        newPositions = [0] * players_count
+        # zapisuje aktualna pozycje
+        add_frame()
 
-        for i in range(players_count):
+        odw = [False] * players_count()
+        newPositions = [0] * players_count()
+
+        # sprawdzenie konfliktów
+        for i in range(players_count()):
             if not odw[i]:
                 visited_indeces = []
                 dfs(players, visited_indeces, odw, i)
@@ -206,79 +225,66 @@ def _simulate(
                                 continue
                             newPositions[visited_indeces[ll]] = -1
                         break
-        i = 0
-        while i < players_count:  # realizacja zwiekszania/usuwania
-            while newPositions[i] == -1:
-                newPositions.pop(i)
-                playerNamesNotation.append((players[i].username, place))
-                players_count -= 1
-                dead = players.pop(i)
-                dead.kill(len(playerNamesNotation), raise_errors)
 
-                if i >= players_count:
+        i = 0
+        while i < players_count():  # realizacja zwiekszania/usuwania
+            while newPositions[i] == -1:
+                print("killed by sm", players[i].username, flush=True)
+                newPositions.pop(i)
+                deadNotation.append((players[i].username, place))
+                players.pop(i).kill(len(deadNotation), raise_errors)
+
+                if i >= players_count():
                     break
-            if i >= players_count:
+            if i >= players_count():
                 break
+
             if newPositions[i] == 0:
                 i += 1
                 continue
+
             players[i].bot = Pair(
                 players[i].top.x + newPositions[i], players[i].top.y - newPositions[i]
             )
             i += 1
 
-        # co iles klatek zone sie zmniejsza
-        zoneCurr += 1
-        if zoneCurr % zoneFrequency == 0:
-            zone += 1
-
         # gdy gracz w strefie odejmij mu miejsce i jak jest za maly to go usun
         i = 0
-        while i < players_count:
-            while (
+        while i < players_count():
+            if (
                 players[i].top.x < zone
                 or players[i].top.y > n - zone
                 or players[i].bot.x > m - zone
                 or players[i].bot.y < zone
             ):
                 players[i].bot += Pair(-1, 1)
-                if players[i].top == players[i].bot:
-                    playerNamesNotation.append((players[i].username, place))
-                    players_count -= 1
-                    dead = players.pop(i)
-                    dead.kill(len(playerNamesNotation), raise_errors)
 
-                    if i >= players_count:
-                        break
-                else:
-                    break
+                if players[i].top == players[i].bot:
+                    print("killed by strefa", players[i].username, flush=True)
+                    deadNotation.append((players[i].username, place))
+                    players.pop(i).kill(len(deadNotation), raise_errors)
+                    i -= 1
             i += 1
 
-        framesTopNotation.append([Pair(-1, -1)] * initialPlayerCount)
-        framesBottomNotation.append([Pair(-1, -1)] * initialPlayerCount)
-        for i in range(players_count):
-            framesTopNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].top.x, players[i].top.y
-            )
-            framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].bot.x, players[i].bot.y
-            )
+        # co iles klatek zone sie zmniejsza
+        if len(zoneNotation) % zoneFrequency == 0:
+            zone += 1
 
-        zoneNotation.append(zone)
+    # add last frame
+    add_frame()
 
     if len(players):
-        playerNamesNotation.append((players[0].username, 1 + len(playerNamesNotation)))
-    playerNamesNotation.reverse()
+        deadNotation.append((players[0].username, 1 + len(deadNotation)))
+    deadNotation.reverse()
 
-    playerNamesNotationReal = []
-    newRanking = calc_ranking(ranking, playerNamesNotation, playerNamesNotationReal)
+    newRanking = calc_ranking(ranking, deadNotation)
 
     for i in range(len(newRanking)):
         rankingNotation.append(newRanking[i])
 
     return generate_notation(
         k,
-        playerNamesNotationReal,
+        playerNames,
         framesTopNotation,
         framesBottomNotation,
         zoneNotation,

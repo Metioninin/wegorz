@@ -50,14 +50,14 @@ def run_simulator(
             for idx, test in enumerate(POKER_TESTS, start=1):
                 start_exc()
 
-                players = [PokerCode("0", exc, trace=True)] + [FakePoker() for _ in range(5)]
+                player_obj = PokerCode("0", exc, trace=True)
+                players = [player_obj] + [FakePoker() for _ in range(5)]
                 shuffle(players)
-                pidx = next(i for i, p in enumerate(players) if type(p) is PokerCode)
 
                 try:
                     simulate_poker(players, money=test)
                 except TestError as e:
-                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(players[pidx]._comm))
+                    format_test_err(e, idx, len(POKER_TESTS), test="\n".join(player_obj._comm))
                     raise
 
                 stop_exc()
@@ -70,10 +70,9 @@ def run_simulator(
             for idx in range(TEST_CNT):
                 start_exc()
 
-                players = [AgarioCode("A", exc, trace=True)] + [FakeAgario() for _ in range(5)]
+                player_obj = AgarioCode("A", exc, trace=True)
+                players = [player_obj] + [FakeAgario() for _ in range(5)]
                 shuffle(players)
-                pidx = next(i for i, p in enumerate(players) if type(p) is AgarioCode)
-                player_obj = players[pidx]
 
                 pos = len(players) # default
 

@@ -126,9 +126,9 @@ class PlayerInfo:
             " ".join(str(s) for s in self.stawki),
             f"{self.stawka}",
             f"{self.pula}",
-            " ".join(str(c) for c in self.ownCards),
+            *(str(c) for c in self.ownCards),
             f"{len(self.mutualCards)}",
-            " ".join([str(c) for c in self.mutualCards]),
+            *([str(c) for c in self.mutualCards]),
         ]
 
 
@@ -303,7 +303,11 @@ class AgarioCode:
 
 class FakeAgario(AgarioCode):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, username="A", exc=None, **kwargs)
+        if "username" not in kwargs:
+            kwargs["username"] = "A"
+        if "exc" not in kwargs:
+            kwargs["exc"] = None
+        super().__init__(*args, **kwargs)
 
     def send_start_info(self, *args, **kwargs) -> None:
         pass
