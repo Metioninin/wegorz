@@ -1307,7 +1307,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &465503215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3255,7 +3255,7 @@ MonoBehaviour:
   startIndex: 1
   waiting: {fileID: 0}
   desired: {fileID: 0}
-  groupText: {fileID: 1068365516}
+  groupText: {fileID: 1343272009}
 --- !u!1 &1150191556
 GameObject:
   m_ObjectHideFlags: 0

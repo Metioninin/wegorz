@@ -77,15 +77,13 @@ public class Anim
 [Serializable] public class Notation
 {
     public int k; // k = n / sta, k = m / stb
-    public List<Order> playerNames; //w kolejnosci rankingu
+    public List<string> playerNames; //w kolejnosci rankingu
     public List<Moves> framesTop;
     public List<Moves> framesBottom;
     public List<int> zone;
     public List<Order> ranking;
     public int group;
     public Notation(){}
-
-
 }
 
 [Serializable]
@@ -139,7 +137,7 @@ public class Interpreter : MonoBehaviour
 
     int dlugoscZyc, iloscSmierci, damage, jednostki, afk, posCount;
     float xSum, ySum;
-    List<string> playerNamesSet;
+    List<string> playerNamesSet = new List<string>();
     public GameObject dymek;
 
     private void Start()
@@ -195,9 +193,9 @@ public class Interpreter : MonoBehaviour
         else
         {
             for (int i = 0; i < 2; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, n, 1), 0, 1000 * speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(size, n, 1), 0, 1500 * speed, true));
             for (int i = 2; i < 4; i++)
-                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, 1000 * speed, true));
+                animations.Add(new Anim(zoneMasks[i], zoneMasks[i].localScale, new Vector3(m, size, 1), 0, 1500 * speed, true));
         }
 
         for (int i = 0; i < 2; i++)
@@ -244,7 +242,7 @@ public class Interpreter : MonoBehaviour
         for (int j = 0; j < playerCount; j++)
         {
             if (!players[j].activeInHierarchy) continue;
-            if (data.framesTop[currentFrame].moves[j].x == -1)
+            if (data.framesTop[currentFrame].moves[j].x == -1000000)
             {
                 didDie = true;
                 var x = Instantiate(dymek, players[j].transform.position, Quaternion.identity);
@@ -292,7 +290,7 @@ public class Interpreter : MonoBehaviour
         kratka = (float)k_Unity / data.k;
         animations = new List<Anim>();
         currentFrame = 1;
-
+        Debug.Log(data.ranking[0].points);
         GenerateGrid();
         zoneMasks[0].localScale = zoneMasks[1].localScale = new Vector2(0, n); //lr
         zoneMasks[2].localScale = zoneMasks[3].localScale = new Vector2(m, 0); //du
@@ -300,19 +298,19 @@ public class Interpreter : MonoBehaviour
         {
             bool czy = true;
             foreach (var name in playerNamesSet)
-                if (name == data.playerNames[i].name)
+                if (name == data.playerNames[i])
                     czy = false;
             if (czy)
-                playerNamesSet.Add(data.playerNames[i].name);
+                playerNamesSet.Add(data.playerNames[i]);
             GameObject newPlayer = Instantiate(playerObject, WorldPos((data.framesTop[0].moves[i] + data.framesBottom[0].moves[i]) / 2), Quaternion.identity);
             System.Random random = new System.Random();
-            Color color = new Color((float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, (float)random.Next(0, 255) / 255, 1);
-            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i].name, color);
+            Color color = new Color((float)random.Next(100, 255) / 255, (float)random.Next(100, 255) / 255, (float)random.Next(100, 255) / 255, 1);
+            newPlayer.GetComponent<Player>().SetPlayer(data.playerNames[i], color);
             newPlayer.transform.localScale = new Vector2(kratka, kratka);
             players.Add(newPlayer);
         }
         SetZone(data.zone[0] * kratka, true);
-        NextFrame();
+        Invoke("NextFrame", 1);
     }
 
     IEnumerator EndGame()
@@ -320,11 +318,11 @@ public class Interpreter : MonoBehaviour
         yield return new WaitForSeconds(1 / speed2 * 2);
 
         src.PlayOneShot(winSfx);
-        winnerArea.SetActive(true);
-        winnerText.text = data.playerNames[0].name;
-        winnerArea.GetComponent<Ranking>().SetRanking(data.playerNames, data.group);
-        yield return new WaitForSeconds(5 / speed2);
-        winnerArea.SetActive(false);
+        //winnerArea.SetActive(true);
+        //winnerText.text = data.ranking[0].name;
+        //winnerArea.GetComponent<Ranking>().SetRanking(data.ranking, data.group);
+        //yield return new WaitForSeconds(5 / speed2);
+        //winnerArea.SetActive(false);
 
         ranking.gameObject.SetActive(true);
         ranking.SetRanking(data.ranking, data.group);
@@ -335,7 +333,7 @@ public class Interpreter : MonoBehaviour
     {
         foreach (var item in grid)
             Destroy(item);
-        grid.Clear();
+        grid.Clear();   
         float x = WorldPos(new pair(1, 0)).x;
         while (x < m / 2)
         {
