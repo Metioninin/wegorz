@@ -228,22 +228,18 @@ def _simulate(
         # gdy gracz w strefie odejmij mu miejsce i jak jest za maly to go usun
         i = 0
         while i < players_count:
-            while (
+            if (
                 players[i].top.x < zone
                 or players[i].top.y > n - zone
                 or players[i].bot.x > m - zone
                 or players[i].bot.y < zone
             ):
                 players[i].bot += Pair(-1, 1)
+
                 if players[i].top == players[i].bot:
                     deadNotation.append((players[i].username, place))
                     players_count -= 1
                     players.pop(i).kill(len(deadNotation), raise_errors)
-
-                    if i >= players_count:
-                        break
-                else:
-                    break
             i += 1
 
         framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
