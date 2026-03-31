@@ -80,6 +80,18 @@ def calc_ranking(
     return curr_ranking
 
 
+def moja_pierwsza_funkcja(pls: int, n: int, m: int):
+    s: set[tuple[int, int]] = set()
+    
+    while len(s) != pls:
+        s.add((random.randint(0, m - 1), random.randint(1, n)))
+
+    d = list(s)
+    random.shuffle(d)
+
+    return d
+
+
 def _simulate(
     players: list[AgarioCode], ranking: list[tuple[str, int]], raise_errors: bool
 ) -> dict:
@@ -107,8 +119,11 @@ def _simulate(
     initialIndex = {}
     initialPlayerCount = players_count
 
-    for i in range(players_count):  # poczatkowe rozstawienie graczy na mapie
-        players[i].top = Pair(random.randint(0, m - 1), random.randint(1, n))
+    pposes = moja_pierwsza_funkcja(players_count, n, m)
+
+    # poczatkowe rozstawienie graczy na mapie
+    for i, pp in zip(range(players_count), pposes, strict=True):
+        players[i].top = Pair(pp[0], pp[1])
         players[i].bot = players[i].top + Pair(1, -1)
         initialIndex[players[i].username] = i
 
@@ -200,6 +215,20 @@ def _simulate(
                                 continue
                             newPositions[visited_indeces[ll]] = -1
                         break
+
+        framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
+        framesBottomNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
+
+        for i in range(players_count):
+            framesTopNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
+                players[i].top.x, players[i].top.y
+            )
+            framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
+                players[i].bot.x, players[i].bot.y
+            )
+
+        zoneNotation.append(zone)
+        
         i = 0
         while i < players_count:  # realizacja zwiekszania/usuwania
             while newPositions[i] == -1:
@@ -241,19 +270,6 @@ def _simulate(
                     players_count -= 1
                     players.pop(i).kill(len(deadNotation), raise_errors)
             i += 1
-
-        framesTopNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
-        framesBottomNotation.append([Pair(-1, -1) for _ in range(initialPlayerCount)])
-
-        for i in range(players_count):
-            framesTopNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].top.x, players[i].top.y
-            )
-            framesBottomNotation[zoneCurr][initialIndex[players[i].username]] = Pair(
-                players[i].bot.x, players[i].bot.y
-            )
-
-        zoneNotation.append(zone)
 
     if len(players):
         deadNotation.append((players[0].username, 1 + len(deadNotation)))
