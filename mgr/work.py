@@ -52,7 +52,6 @@ def run_simulator(
 
                 player_obj = PokerCode("0", exc, trace=True)
                 players = [player_obj] + [FakePoker() for _ in range(5)]
-                shuffle(players)
 
                 try:
                     simulate_poker(players, money=test)
