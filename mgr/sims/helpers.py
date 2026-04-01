@@ -156,9 +156,9 @@ class PokerCode:
                 raise TestError(str(e))
             return None
 
-        if first_part in ("Fold", "Check", "Call"):
+        if first_part in ("Fold", "Check", "Call", "AllIn"):
             return (first_part, 0)
-        elif first_part not in ("Raise", "All"):
+        elif first_part not in ("Raise",):
             self.exc.exit()
             self.exc = None
 
@@ -174,12 +174,6 @@ class PokerCode:
                     f"Got {wrap_err(first_part)}, but after that error happend\n{e}"
                 )
             return None
-
-        if first_part == "All":
-            comb = first_part + " " + second_part
-            if second_part == "In":
-                return (comb, 0)
-            raise TestError(f"Oczekiwano 'All In', otrzymano: {wrap_err(comb)}")
 
         try:
             val = int(second_part)
@@ -215,7 +209,7 @@ class FakePoker(PokerCode):
         i = ctx.twojIndex
 
         if ctx.hajs[i]:
-            moves.append(("All In", 0))
+            moves.append(("AllIn", 0))
 
         if ctx.stawka - ctx.stawki[i] <= ctx.hajs[i]:
             moves.append(("Call", 0))

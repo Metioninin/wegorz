@@ -345,7 +345,7 @@ def _simulate(
                         hajs[i] -= stawka - stawki[i]
                         pula += stawka - stawki[i]
                         stawki[i] = stawka
-                case "All In":
+                case "AllIn":
                     if hajs[i] != 0:
                         pula, stawka = AllIn(i, allIned, hajs, pula, stawka, stawki)
                     else:

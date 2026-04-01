@@ -40,9 +40,9 @@ public class Player : MonoBehaviour
         money.text = info.money.ToString() + "$";
         if (info.move == "Raise")
             info.move += "\n" + info.bet.ToString() + "$";
-        if (info.move != "Fold" && info.move != "Check" && info.move != "All In" && info.move != "Error")
+        if (info.move != "Fold" && info.move != "Check" && info.move != "AllIn" && info.move != "Error")
             SoundManager.Instance.PlaySfx(SoundManager.Instance.bet);
-        else if (info.move == "All In")
+        else if (info.move == "AllIn")
             SoundManager.Instance.PlaySfx(SoundManager.Instance.allin);
 
         StartCoroutine(ShowTextAnimation(info.move));
