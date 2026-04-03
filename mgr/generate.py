@@ -1,3 +1,8 @@
+#
+# Uwaga! Generate.py byl zmieninay na biezaco, wiec
+# nie dziala on dla rund 1 i 2, a 3 idk
+# 
+
 from pathlib import Path
 from random import shuffle
 import tempfile
