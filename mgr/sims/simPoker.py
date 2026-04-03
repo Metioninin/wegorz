@@ -251,13 +251,20 @@ def _simulate(
         for numer in numerki:
             deck.append(Card(kolor, numer))
 
+    to_rank = {p[0]: idx for idx, p in enumerate(ranking)}
+
+    def get_rank_i(abc: int):
+        return to_rank[playerCodes[i].username]
+
     # generowanie graczy (kazdy daje blinda)
     for i in range(pCount):
-        if ranking[i][1] == 0:
+        rid = get_rank_i(i)
+
+        if ranking[rid][1] == 0:
             folded[i] = True
 
-        coStawiam = min(BLIND, ranking[i][1])
-        hajs.append(ranking[i][1] - coStawiam)
+        coStawiam = min(BLIND, ranking[rid][1])
+        hajs.append(ranking[rid][1] - coStawiam)
         stawki.append(coStawiam)
         pula += coStawiam
 
@@ -336,7 +343,7 @@ def _simulate(
                         stawka = move[1]
                         stawki[i] = move[1]
                 case "Call":
-                    if stawka - stawki[i] > hajs[i]:
+                    if stawka - stawki[i] >= hajs[i]:
                         if raise_errors:
                             raise TestError("Robisz call a nie masz tyle hajsu")
                         winner = PlayerFold(i, folded, stawki)

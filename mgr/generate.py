@@ -112,8 +112,6 @@ def run_match(
             while len(players) < 6:
                 players.append(FoldPoker(next(gen), None))
 
-            shuffle(players)
-
             res = simulate_poker(players, ranking, test_mode=False)
             res["group"] = str(group_id)
             
@@ -148,7 +146,8 @@ def get_logins(rid: int) -> list[str]:
             JOIN users u ON u.id = s.user_id
             WHERE 
                 s.round_id = %s 
-                AND s.status IN ('ok', 'błąd testowania')
+                AND s.status = 'ok'
+                AND u.login != '317'
             ORDER BY u.login
             """,
             (rid,),
@@ -165,15 +164,14 @@ def ceil_div(x, y):
 def gen_groups(players: list[str], group_cnt: int) -> list[list[str]]:
     shuffle(players)
 
-    base_size = ceil_div(len(players), group_cnt)
+    base_size = len(players) // group_cnt + 1
     groups_cnt = ceil_div(len(players), base_size)
 
     groups: list[list[str]] = []
 
     for i in range(groups_cnt):
-        pl_len = len(players)
-        start = i * pl_len
-        end = start + pl_len
+        start = i * base_size
+        end = start + base_size
         groups.append(players[start:end])
 
     return groups
@@ -190,13 +188,15 @@ if __name__ == "__main__":
         flush=True,
     )
 
-    rnd = 2
+    rnd = 3
     assert rnd
 
     group_cnt = 1
     assert group_cnt
 
     groups = gen_groups(get_logins(rnd), group_cnt)
+    print(groups, flush=True)
+    shuffle(groups[0])
     data = []
 
     for gidx, group in enumerate(groups, start=1):
@@ -206,9 +206,10 @@ if __name__ == "__main__":
         matches: list[list[str]] = gen_matches(group, times)
         assert matches
         
-        ranking = [(p, 0) for p in group]
+        ranking = [(p, 1000) for p in group] # TODO: stawka
 
         for midx, match in enumerate(matches):
+            print(midx, len(matches), flush=True)
             execs: list[tuple[str, CppExecutor | PythonExecutor]] = []
 
             for idx, player in enumerate(match):
